@@ -59,14 +59,14 @@ router.get('/users/:walletAddress', async (req, res) => {
 router.post('/users', async (req, res) => {
     try {
         const { walletAddress, name, email, company, location, role, roles } = req.body;
-        
+
         // Handle roles array
         let rolesArray = roles || ['CONSUMER'];
         if (role && !rolesArray.includes(role)) {
             // If single role is provided but not in array, add it
             rolesArray = [...rolesArray.filter(r => r !== 'CONSUMER'), role];
         }
-        
+
         // Determine primary role (first non-CONSUMER role)
         const nonConsumerRoles = rolesArray.filter(r => r !== 'CONSUMER');
         const primaryRole = nonConsumerRoles.length > 0 ? nonConsumerRoles[0] : 'CONSUMER';
@@ -97,9 +97,9 @@ router.post('/users', async (req, res) => {
 router.patch('/users/:walletAddress/role', async (req, res) => {
     try {
         const { role, roles } = req.body;
-        
+
         let updateData = {};
-        
+
         if (roles) {
             // Handle roles array update
             let rolesArray = Array.isArray(roles) ? roles : [roles];
@@ -213,7 +213,7 @@ router.get('/products/:productId', async (req, res) => {
 router.get('/products/:productId/history', async (req, res) => {
     try {
         const { userRoles, userAddress } = req.query;
-        
+
         // Parse comma-separated roles
         const rolesArray = userRoles ? userRoles.split(',') : ['CONSUMER'];
 
@@ -290,13 +290,36 @@ router.post('/products/:productId/checkpoints', async (req, res) => {
     }
 });
 
-// Get products by owner
+// Get products by explicit role-based ownership
 router.get('/owner/:walletAddress/products', async (req, res) => {
     try {
-        const products = await Product.findByOwner(req.params.walletAddress);
+        const user = await User.findOne({ walletAddress: req.params.walletAddress.toLowerCase() });
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        let query = { isActive: true };
+        switch (user.role) {
+            case 'MANUFACTURER':
+                query.manufacturer_id = user._id;
+                break;
+            case 'DISTRIBUTOR':
+                query.distributor_id = user._id;
+                break;
+            case 'RETAILER':
+                query.retailer_id = user._id;
+                break;
+            case 'CONSUMER':
+            default:
+                query.consumer_id = user._id;
+                // If they have dual roles or fallback, consumer takes precedence in default
+                break;
+        }
+
+        const products = await Product.find(query);
         res.json(products);
     } catch (error) {
-        console.error('Get owner products error:', error);
+        console.error('Get explicit ownership products error:', error);
         res.status(500).json({ error: 'Failed to get products' });
     }
 });

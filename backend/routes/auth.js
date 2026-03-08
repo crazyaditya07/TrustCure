@@ -6,7 +6,7 @@ const bcrypt = require('bcryptjs');
 // Register new user
 router.post('/register', async (req, res) => {
     try {
-        const { name, email, password, company, role, roles } = req.body;
+        const { name, email, password, company, role, roles, walletAddress } = req.body;
 
         // Validation
         if (!name || !email || !password) {
@@ -31,6 +31,7 @@ router.post('/register', async (req, res) => {
             name,
             email: email.toLowerCase(),
             password: hashedPassword,
+            walletAddress: walletAddress ? walletAddress.toLowerCase() : '0x' + require('crypto').randomBytes(20).toString('hex').toLowerCase(),
             company,
             role: role || 'CONSUMER',
             roles: roles || [role || 'CONSUMER'],

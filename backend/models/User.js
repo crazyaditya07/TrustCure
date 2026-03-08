@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const userSchema = new mongoose.Schema({
     walletAddress: {
         type: String,
-        sparse: true, // Changed from required to optional
+        required: true,
         unique: true,
         lowercase: true,
         index: true

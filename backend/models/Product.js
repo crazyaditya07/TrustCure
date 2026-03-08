@@ -68,6 +68,22 @@ const productSchema = new mongoose.Schema({
         type: String, // wallet address
         lowercase: true
     },
+    manufacturer_id: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+    },
+    distributor_id: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+    },
+    retailer_id: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+    },
+    consumer_id: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+    },
     manufacturer: {
         walletAddress: String,
         name: String,

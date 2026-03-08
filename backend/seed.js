@@ -4,6 +4,7 @@ const QRCode = require('qrcode');
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
+const bcrypt = require('bcryptjs');
 const Product = require('./models/Product'); // Ensure this points to the right path
 require('dotenv').config({ path: '../.env' });// Try to auto-detect local IP for scanning across network (Phone <-> Laptop)
 function getLocalIpAddress() {
@@ -50,23 +51,24 @@ async function seedProducts(count = 50) {
         await User.deleteMany({});
 
         // Create mock static chain of users
+        const mockPassword = await bcrypt.hash('password123', 10);
         const manufacturer = await User.create({
-            name: 'Farmson Pharmaceutical', email: 'mfg@pharma.com', password: 'password123',
+            name: 'Farmson Pharmaceutical', email: 'mfg@pharma.com', password: mockPassword,
             role: 'MANUFACTURER', roles: ['MANUFACTURER'], walletAddress: '0x1111111111111111111111111111111111111111',
             company: 'Farmson', isVerified: true, isActive: true
         });
         const distributor = await User.create({
-            name: 'Amol Pharmaceuticals', email: 'dist@pharma.com', password: 'password123',
+            name: 'Amol Pharmaceuticals', email: 'dist@pharma.com', password: mockPassword,
             role: 'DISTRIBUTOR', roles: ['DISTRIBUTOR'], walletAddress: '0x2222222222222222222222222222222222222222',
             company: 'Amol Logistics', isVerified: true, isActive: true
         });
         const retailer = await User.create({
-            name: 'Aditya Pharmacy', email: 'retail@pharma.com', password: 'password123',
+            name: 'Aditya Pharmacy', email: 'retail@pharma.com', password: mockPassword,
             role: 'RETAILER', roles: ['RETAILER'], walletAddress: '0x3333333333333333333333333333333333333333',
             company: 'Aditya Retail', isVerified: true, isActive: true
         });
         const consumer = await User.create({
-            name: 'Divy', email: 'consumer@pharma.com', password: 'password123',
+            name: 'Divy', email: 'consumer@pharma.com', password: mockPassword,
             role: 'CONSUMER', roles: ['CONSUMER'], walletAddress: '0x4444444444444444444444444444444444444444',
             company: 'Individual', isVerified: true, isActive: true
         });

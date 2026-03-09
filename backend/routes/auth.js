@@ -9,8 +9,8 @@ router.post('/register', async (req, res) => {
         const { name, email, password, company, role, roles, walletAddress } = req.body;
 
         // Validation
-        if (!name || !email || !password) {
-            return res.status(400).json({ message: 'Name, email, and password are required' });
+        if (!name || !email || !password || !walletAddress) {
+            return res.status(400).json({ message: 'Name, email, password, and wallet address are required' });
         }
 
         if (password.length < 6) {
@@ -31,7 +31,7 @@ router.post('/register', async (req, res) => {
             name,
             email: email.toLowerCase(),
             password: hashedPassword,
-            walletAddress: walletAddress ? walletAddress.toLowerCase() : '0x' + require('crypto').randomBytes(20).toString('hex').toLowerCase(),
+            walletAddress: walletAddress.toLowerCase(),
             company,
             role: role || 'CONSUMER',
             roles: roles || [role || 'CONSUMER'],

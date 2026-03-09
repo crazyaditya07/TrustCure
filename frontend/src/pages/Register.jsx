@@ -13,7 +13,8 @@ function Register() {
         company: '',
         city: '',
         country: '',
-        role: 'CONSUMER'
+        role: 'CONSUMER',
+        walletAddress: ''
     });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
@@ -40,6 +41,11 @@ function Register() {
             return;
         }
 
+        if (!formData.walletAddress.trim() || formData.walletAddress.length !== 42 || !formData.walletAddress.startsWith('0x')) {
+            setError('Valid EVM-compatible Wallet Address is required (Starts with 0x)');
+            return;
+        }
+
         if (formData.password.length < 6) {
             setError('Password must be at least 6 characters');
             return;
@@ -60,6 +66,7 @@ function Register() {
             company: formData.company || undefined,
             role: formData.role,
             roles: [formData.role],
+            walletAddress: formData.walletAddress,
             location: {
                 city: formData.city,
                 country: formData.country
@@ -142,6 +149,22 @@ function Register() {
                             placeholder="your.email@example.com"
                             required
                             autoComplete="email"
+                        />
+                    </div>
+
+                    <div className="form-group">
+                        <label className="form-label" htmlFor="walletAddress">
+                            Ethereum Wallet Address <span style={{ color: 'var(--accent-rose)' }}>*</span>
+                        </label>
+                        <input
+                            type="text"
+                            id="walletAddress"
+                            name="walletAddress"
+                            className="form-input"
+                            value={formData.walletAddress}
+                            onChange={handleChange}
+                            placeholder="0x123...abc"
+                            required
                         />
                     </div>
 

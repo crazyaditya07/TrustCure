@@ -7,7 +7,7 @@ import { useWeb3 } from '../contexts/Web3Context';
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 const TransferModal = ({ isOpen, onClose, product, onTransferInitiated }) => {
-    const { account, signer } = useWeb3();
+    const { account, signer, contracts } = useWeb3();
     const [step, setStep] = useState(1); // 1: Select Recipient, 2: Confirm & Sign, 3: Success
     const [recipients, setRecipients] = useState([]);
     const [selectedRecipient, setSelectedRecipient] = useState(null);
@@ -51,36 +51,80 @@ const TransferModal = ({ isOpen, onClose, product, onTransferInitiated }) => {
     };
 
     const handleInitiate = async () => {
-        if (!selectedRecipient || !signer) return;
+        if (!selectedRecipient || !signer || !contracts) return;
 
         setLoading(true);
         setError(null);
 
         try {
-            // 1. Prepare message to sign
-            const message = `Transfer Product: ${product.name}\nToken ID: ${product.tokenId}\nTo: ${selectedRecipient.name}\nWallet: ${selectedRecipient.walletAddress}\nTimestamp: ${Date.now()}`;
-            
-            // 2. Request signature for intent proof
-            const signature = await signer.signMessage(message);
+            // STEP 3 - Validate Ownership before call
+            if (!product.currentOwner || account.toLowerCase() !== product.currentOwner.toLowerCase()) {
+                throw new Error("Unauthorized: Connected wallet is not the owner of this product");
+            }
 
-            // 3. Call backend to create pending transfer
-            await axios.post(`${API_URL}/transfers`, {
-                productId: product.productId,
-                tokenId: product.tokenId,
-                fromWallet: account,
-                toWallet: selectedRecipient.walletAddress,
-                fromRole: product.currentStage.toUpperCase(), // Simplistic mapping
-                toRole: nextRole,
-                currentStage: product.currentStage,
-                nextStage: getNextStageName(product.currentStage),
-                signature
+            let onChainOwner;
+            try {
+                onChainOwner = await contracts.supplyChainNFT.ownerOf(product.tokenId);
+            } catch (verifErr) {
+                console.error("On-chain verification failed:", verifErr);
+                throw new Error("Blockchain verification failed: This product may not exist on the current network.");
+            }
+
+            if (onChainOwner.toLowerCase() !== account.toLowerCase()) {
+                throw new Error(`Unauthorized: You are not the on-chain owner. Current owner: ${onChainOwner.slice(0,6)}...${onChainOwner.slice(-4)}`);
+            }
+
+            // STEP 2 - Execute Smart Contract Transfer
+            const location = selectedRecipient.location?.city || "Unknown";
+            const notes = `Transferred to ${selectedRecipient.name}`;
+            
+            let tx;
+            if (nextRole === 'DISTRIBUTOR') {
+                tx = await contracts.supplyChainNFT.transferToDistributor(
+                    product.tokenId,
+                    selectedRecipient.walletAddress,
+                    location,
+                    notes
+                );
+            } else if (nextRole === 'RETAILER') {
+                tx = await contracts.supplyChainNFT.transferToRetailer(
+                    product.tokenId,
+                    selectedRecipient.walletAddress,
+                    location,
+                    notes
+                );
+            } else if (nextRole === 'CONSUMER') {
+                tx = await contracts.supplyChainNFT.sellToConsumer(
+                    product.tokenId,
+                    selectedRecipient.walletAddress,
+                    location,
+                    notes
+                );
+            } else {
+                throw new Error("Invalid transfer stage.");
+            }
+
+            await tx.wait(); // Verify confirmation
+
+            // STEP 4 - Post-Transaction State Update
+            const nextStage = nextRole === 'DISTRIBUTOR' ? 'InDistribution' : nextRole === 'RETAILER' ? 'InRetail' : 'Sold';
+            
+            await axios.post(`${API_URL}/products/${product.productId}/checkpoints`, {
+                timestamp: new Date(),
+                location: selectedRecipient.location || { address: 'Unknown', city: 'Unknown', country: 'Unknown' },
+                stage: nextStage,
+                handler: selectedRecipient.walletAddress,
+                handlerName: selectedRecipient.name,
+                handlerEmail: selectedRecipient.email,
+                notes: 'Transferred custody on-chain',
+                transactionHash: tx.hash
             });
 
-            setStep(3);
+            setStep(3); // Success UI
             if (onTransferInitiated) onTransferInitiated();
         } catch (err) {
-            console.error('Transfer initiation failed:', err);
-            setError(err.message || 'Failed to initiate transfer.');
+            console.error('Transfer execution failed:', err);
+            setError(err?.reason || err.message || 'Failed to execute transfer.');
         } finally {
             setLoading(false);
         }
@@ -206,7 +250,7 @@ const TransferModal = ({ isOpen, onClose, product, onTransferInitiated }) => {
                             <div className="p-4 bg-indigo-500/10 border border-indigo-500/20 rounded-2xl flex items-start gap-3">
                                 <AlertCircle className="w-5 h-5 text-indigo-400 flex-shrink-0 mt-0.5" />
                                 <p className="text-xs text-indigo-200/80 leading-relaxed">
-                                    By signing, you are authorizing the transfer of this product. The actual blockchain transaction will occur after the receiver confirms receipt.
+                                    By confirming, your wallet will prompt an Ethereum transaction to permanently transfer the custody of this product to the recipient directly on-chain.
                                 </p>
                             </div>
 
@@ -236,16 +280,19 @@ const TransferModal = ({ isOpen, onClose, product, onTransferInitiated }) => {
                                 <CheckCircle2 className="w-10 h-10 text-emerald-500" />
                             </div>
                             <div>
-                                <h3 className="text-2xl font-bold text-white">Transfer Initiated!</h3>
-                                <p className="text-slate-400 mt-2 text-sm leading-relaxed px-6">
-                                    The transfer is now pending. Once {selectedRecipient.name} confirms receipt, the blockchain transaction will be finalized.
+                                <h3 className="text-2xl font-bold text-white">Transfer Completed!</h3>
+                                <p className="text-emerald-400 mt-2 mb-1 font-semibold text-sm px-6">
+                                    Transaction confirmed successfully.
+                                </p>
+                                <p className="text-slate-400 text-sm leading-relaxed px-6">
+                                    The blockchain transaction has been finalized. The product has been securely transferred to {selectedRecipient.name}.
                                 </p>
                             </div>
                             <button
                                 onClick={onClose}
                                 className="w-full py-4 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-2xl transition-all"
                             >
-                                Close Dashboard
+                                Close & Refresh Dashboard
                             </button>
                         </div>
                     )}

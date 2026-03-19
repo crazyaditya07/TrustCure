@@ -142,10 +142,10 @@ class EventListener {
                 await this.handleCheckpointAdded(tokenId, stage, location, handler, timestamp, event);
             }
 
-            const transferEvents = await this.supplyChainContract.queryFilter('LifecycleTransition', fromBlock, toBlock);
+            const transferEvents = await this.supplyChainContract.queryFilter('ProductTransferred', fromBlock, toBlock);
             for (const event of transferEvents) {
-                const { tokenId, from, to, stage, timestamp } = event.args;
-                await this.handleLifecycleTransition(tokenId, from, to, stage, timestamp, event);
+                const { tokenId, from, to, newStage, timestamp } = event.args;
+                await this.handleLifecycleTransition(tokenId, from, to, newStage, timestamp, event);
             }
 
             const roleEvents = await this.supplyChainContract.queryFilter('RoleGrantedToUser', fromBlock, toBlock);
@@ -302,7 +302,7 @@ class EventListener {
 
             // 1. Create event record
             const eventRecord = new Event({
-                eventType: 'LifecycleTransition',
+                eventType: 'ProductTransferred',
                 productId: product.productId,
                 tokenId: Number(tokenId),
                 from: from.toLowerCase(),

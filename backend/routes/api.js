@@ -211,6 +211,7 @@ router.get('/products', async (req, res) => {
 // Get single product by ID
 router.get('/products/:productId', async (req, res) => {
     try {
+        console.log("BACKEND: FETCHING PRODUCT WITH ID/TOKEN:", req.params.productId);
         const product = await Product.findOne({
             $or: [
                 { productId: req.params.productId },
@@ -233,6 +234,7 @@ router.get('/products/:productId', async (req, res) => {
 router.get('/products/:productId/history', async (req, res) => {
     try {
         const { userRoles, userAddress } = req.query;
+        console.log("BACKEND: FETCHING HISTORY FOR PRODUCT ID/TOKEN:", req.params.productId);
 
         // Parse comma-separated roles
         const rolesArray = userRoles ? userRoles.split(',') : ['CONSUMER'];
@@ -264,15 +266,27 @@ router.get('/products/:productId/history', async (req, res) => {
 });
 
 // Create or update product (synced from blockchain)
+// NOTE: Primary creation now happens through eventListener.js
 router.post('/products', async (req, res) => {
     try {
         const productData = req.body;
+        console.log("BACKEND: RECEIVED PRODUCT DATA:", productData);
+        
+        // Ensure tokenId is present for on-chain products
+        if (!productData.tokenId) {
+            console.error("BACKEND ERROR: Missing tokenId in request");
+            return res.status(400).json({ error: 'tokenId is required for product synchronization' });
+        }
 
         const product = await Product.findOneAndUpdate(
-            { productId: productData.productId },
-            productData,
+            { tokenId: productData.tokenId }, // Use tokenId as primary key for consensus
+            { 
+               ...productData,
+               productId: productData.productId || `TRX-${Math.random().toString(36).substring(2, 10).toUpperCase()}`
+            },
             { upsert: true, new: true }
         );
+        console.log("BACKEND: SAVED/UPDATED PRODUCT:", product);
 
         res.json(product);
     } catch (error) {
@@ -285,11 +299,23 @@ router.post('/products', async (req, res) => {
 router.post('/products/:productId/checkpoints', async (req, res) => {
     try {
         const checkpoint = req.body;
-
-        const product = await Product.findOne({ productId: req.params.productId });
+        const product = await Product.findOne({ 
+            $or: [
+                { productId: req.params.productId },
+                { tokenId: parseInt(req.params.productId) || -1 }
+            ]
+        });
 
         if (!product) {
             return res.status(404).json({ error: 'Product not found' });
+        }
+
+        // Enforce unique checkpoint if transactionHash is provided
+        if (checkpoint.transactionHash) {
+            const exists = product.checkpoints.some(cp => cp.transactionHash === checkpoint.transactionHash);
+            if (exists) {
+                return res.json(product); // Deduplicate
+            }
         }
 
         await product.addCheckpoint(checkpoint);
@@ -313,32 +339,58 @@ router.post('/products/:productId/checkpoints', async (req, res) => {
 // Get products by explicit role-based ownership
 router.get('/owner/:walletAddress/products', async (req, res) => {
     try {
-        const user = await User.findOne({ walletAddress: req.params.walletAddress.toLowerCase() });
+        const searchedWallet = req.params.walletAddress.toLowerCase();
+        console.log("BACKEND: SEARCHING PRODUCTS FOR WALLET:", searchedWallet);
+
+        const user = await User.findOne({ walletAddress: searchedWallet });
         if (!user) {
-            return res.status(404).json({ error: 'User not found' });
+            console.log("BACKEND: No user record found for wallet, returning empty products.");
+            return res.json([]);
         }
 
+        const wallet = user.walletAddress.toLowerCase();
         let query = { isActive: true };
+        
         switch (user.role) {
             case 'MANUFACTURER':
-                query.manufacturer_id = user._id;
+                query.$or = [
+                    { manufacturer_id: user._id },
+                    { 'manufacturer.walletAddress': wallet }
+                ];
                 break;
             case 'DISTRIBUTOR':
-                query.distributor_id = user._id;
+                query.$or = [
+                    { distributor_id: user._id },
+                    { currentOwner: wallet }
+                ];
                 break;
             case 'RETAILER':
-                query.retailer_id = user._id;
+                query.$or = [
+                    { retailer_id: user._id },
+                    { currentOwner: wallet }
+                ];
                 break;
             case 'CONSUMER':
             default:
-                query.consumer_id = user._id;
-                // If they have dual roles or fallback, consumer takes precedence in default
+                query.$or = [
+                    { consumer_id: user._id },
+                    { currentOwner: wallet }
+                ];
                 break;
         }
 
         const products = await Product.find(query)
             .populate('manufacturer_id distributor_id retailer_id consumer_id', 'name')
             .sort({ createdAt: -1 });
+
+        console.log("DB PRODUCTS FOUND:", products.length, "for wallet:", wallet);
+        if (products.length > 0) {
+            console.log("FIRST PRODUCT OWNER/MANUFACTURER:", 
+                products[0].currentOwner, 
+                products[0].manufacturer?.walletAddress
+            );
+        }
+
         res.json(enrichProducts(products));
     } catch (error) {
         console.error('Get explicit ownership products error:', error);

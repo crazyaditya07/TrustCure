@@ -1,7 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
-import { Web3Provider } from './contexts/Web3Context';
+import { Web3Provider, useWeb3 } from './contexts/Web3Context';
 import { NotificationProvider } from './contexts/NotificationContext';
 // Use the new Navbar
 import Navbar from './components/Navbar';
@@ -24,6 +24,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 // Protected Route Component (unchanged)
 function ProtectedRoute({ children, allowedRoles = [] }) {
     const { isAuthenticated, user, loading } = useAuth();
+    const { account, isConnected } = useWeb3();
 
     if (loading) {
         return (
@@ -41,6 +42,40 @@ function ProtectedRoute({ children, allowedRoles = [] }) {
         const userRoles = user.roles || [user.role];
         if (!allowedRoles.some(role => userRoles.includes(role))) {
             return <Navigate to="/dashboard" replace />;
+        }
+    }
+
+    // Role-to-Wallet Strict Checking
+    if (isConnected && account && user && user.walletAddress) {
+        if (account.toLowerCase() !== user.walletAddress.toLowerCase()) {
+            return (
+                <div className="flex flex-col items-center justify-center min-h-[80vh] text-center p-4">
+                    <div className="bg-red-900/40 border border-red-500 rounded-lg p-8 max-w-lg shadow-2xl backdrop-blur-sm">
+                        <div className="flex justify-center mb-4">
+                            <div className="bg-red-500/20 p-3 rounded-full">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                </svg>
+                            </div>
+                        </div>
+                        <h2 className="text-2xl font-bold text-red-400 mb-4">Wallet Mismatch Detected</h2>
+                        <p className="text-gray-200 text-lg mb-4">
+                            Your logged-in profile dictates you use the following wallet for this role:
+                            <br />
+                            <span className="font-mono text-cyan-400 font-semibold block mt-2 text-sm">{user.walletAddress}</span>
+                        </p>
+                        <p className="text-gray-400">
+                            Connected Wallet:<br/>
+                            <span className="font-mono block mt-1 text-xs">{account}</span>
+                        </p>
+                        <div className="mt-8 pt-6 border-t border-red-500/30">
+                            <p className="text-gray-300">
+                                Please open MetaMask and switch to the assigned wallet address to continue using the application.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            );
         }
     }
 

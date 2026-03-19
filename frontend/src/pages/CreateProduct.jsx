@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { ethers } from 'ethers';
 import { useNavigate } from 'react-router-dom';
 import { useWeb3 } from '../contexts/Web3Context';
 import { useAuth } from '../contexts/AuthContext';
@@ -77,6 +78,7 @@ function CreateProduct() {
 
         try {
             setLoading(true);
+            let tokenId;
 
             // Build location object with coordinates if available
             const locationObj = {
@@ -89,78 +91,166 @@ function CreateProduct() {
                 } : null
             };
 
-            // If wallet is connected and contracts are available, use blockchain
-            if (isConnected && contracts.supplyChainNFT && account) {
-                const tokenURI = `data:application/json;base64,${btoa(JSON.stringify({ name: formData.name }))}`;
-
-                const tx = await contracts.supplyChainNFT.mintProduct(
-                    formData.productId, formData.batchNumber, formData.location, tokenURI, formData.notes
-                );
-                await tx.wait();
-
-                // Save to backend with coordinates
-                await fetch(`${API_URL}/api/products`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        productId: formData.productId,
-                        name: formData.name || formData.productId,
-                        batchNumber: formData.batchNumber,
-                        currentStage: 'Manufactured',
-                        currentOwner: account.toLowerCase(),
-                        manufacturer: { walletAddress: account.toLowerCase(), location: locationObj.address },
-                        manufacturingLocation: locationObj,
-                        checkpoints: [{
-                            stage: 'Manufactured',
-                            timestamp: new Date().toISOString(),
-                            location: locationObj,
-                            handler: account.toLowerCase(),
-                            notes: formData.notes || 'Product manufactured'
-                        }]
-                    })
-                });
-
-                if (showToast) {
-                    showToast({ type: 'productMinted', data: { productId: formData.productId } });
-                }
-            } else {
-                // For email-only users, save directly to backend without blockchain
-                const ownerIdentifier = user?.id || user?.email || 'unknown';
-
-                await fetch(`${API_URL}/api/products`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        productId: formData.productId,
-                        name: formData.name || formData.productId,
-                        batchNumber: formData.batchNumber,
-                        currentStage: 'Manufactured',
-                        currentOwner: ownerIdentifier,
-                        manufacturer: {
-                            name: user?.name || 'Unknown',
-                            email: user?.email,
-                            location: locationObj.address
-                        },
-                        manufacturingLocation: locationObj,
-                        checkpoints: [{
-                            stage: 'Manufactured',
-                            timestamp: new Date().toISOString(),
-                            location: locationObj,
-                            handlerName: user?.name || 'Unknown',
-                            notes: formData.notes || 'Product manufactured'
-                        }]
-                    })
-                });
-
-                alert('Product created successfully (stored in database)');
+            // Step 1 - Check Ethereum
+            if (!window.ethereum) {
+                throw new Error("MetaMask not installed");
             }
 
-            navigate(`/product/${formData.productId}`);
-        } catch (err) {
-            alert('Failed: ' + err.message);
-        } finally {
-            setLoading(false);
-        }
+            // Step 2 - Force Account Retrieval (Bypass Context Delay)
+            console.log("ACCOUNT BEFORE CHECK:", account);
+            let activeAccount = account;
+            
+            if (!activeAccount) {
+                console.log("🔍 Account missing from context. Requesting from MetaMask...");
+                const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                activeAccount = accounts[0];
+                console.log("FORCED ACCOUNT:", activeAccount);
+            }
+
+            if (!activeAccount) {
+                throw new Error("No wallet account found. Please connect MetaMask.");
+            }
+
+            // Step 3 - Use Direct Signer for Minting
+            const browserProvider = new ethers.BrowserProvider(window.ethereum);
+            
+            // Step 4 - Verify Network (Sepolia)
+            const network = await browserProvider.getNetwork();
+            console.log("NETWORK:", Number(network.chainId));
+            if (Number(network.chainId) !== 11155111) {
+                throw new Error("Wrong network. Please switch to Sepolia (Chain ID: 11155111)");
+            }
+
+            const signerInstance = await browserProvider.getSigner();
+            const directAccount = await signerInstance.getAddress();
+            console.log("DIRECT SIGNER ACCOUNT:", directAccount);
+            
+            // Step 5 - Initialize Contract Directly
+            const contractAddress = "0xDaea19dE3b36a502eD6F56b53dc878D9428a6618";
+            const contractABI = [
+                "function mintProduct(string productId, string batchNumber, string location, string tokenURI, string notes) public returns (uint256)",
+                "function name() public view returns (string)",
+                "event Transfer(address indexed from, address indexed to, uint256 indexed tokenId)",
+                "event ProductMinted(uint256 indexed tokenId, string productId, string batchNumber, address indexed manufacturer, uint256 timestamp)",
+                "event ProductGenesis(uint256 indexed tokenId, string physicalId, address indexed manufacturer, uint256 timestamp)"
+            ];
+            
+            const contract = new ethers.Contract(contractAddress, contractABI, signerInstance);
+            console.log("CONTRACT ADDRESS:", contract.target);
+
+            // Step 6 - Force Test Call
+            console.log("TESTING CONTRACT CONNECTION...");
+            try {
+                const contractName = await contract.name();
+                console.log("CONTRACT NAME:", contractName);
+            } catch (testErr) {
+                throw new Error("Contract test call failed: " + testErr.message);
+            }
+
+            const tokenURI = `data:application/json;base64,${btoa(JSON.stringify({ name: formData.name }))}`;
+
+            console.log("🚀 CALLING MINT FUNCTION NOW");
+            console.log("FINAL ACCOUNT USED:", directAccount);
+            
+            const tx = await contract.mintProduct(
+                formData.productId, formData.batchNumber, formData.location, tokenURI, formData.notes
+            );
+            
+            console.log("MINT TX SENT:", tx.hash);
+            showToast && showToast({ 
+                type: 'info', 
+                message: 'Transaction submitted. Waiting for blockchain confirmation...' 
+            });
+
+            const receipt = await tx.wait();
+            console.log("✅ Transaction confirmed:", receipt.hash);
+            console.log("FULL RECEIPT:", receipt);
+
+            // Extract tokenId from Transfer event OR ProductMinted/Genesis event
+            let extractedTokenId = null;
+            
+            // Look for Transfer event (from address 0)
+            const transferLog = receipt.logs.find(log => {
+                try {
+                    const parsed = contract.interface.parseLog(log);
+                    return parsed.name === 'Transfer' && parsed.args.from === '0x0000000000000000000000000000000000000000';
+                } catch (e) { return false; }
+            });
+
+            if (transferLog) {
+                const parsedTransfer = contract.interface.parseLog(transferLog);
+                extractedTokenId = Number(parsedTransfer.args.tokenId);
+                console.log("EXTRACTED FROM TRANSFER:", extractedTokenId);
+            }
+
+            // Fallback: Look for ProductMinted or ProductGenesis events
+            if (!extractedTokenId) {
+                const mintLog = receipt.logs.find(log => {
+                    try {
+                        const parsed = contract.interface.parseLog(log);
+                        return parsed.name === 'ProductMinted' || parsed.name === 'ProductGenesis';
+                    } catch (e) { return false; }
+                });
+
+                if (mintLog) {
+                    const parsedMint = contract.interface.parseLog(mintLog);
+                    extractedTokenId = Number(parsedMint.args.tokenId);
+                    console.log("EXTRACTED FROM MINT/GENESIS:", extractedTokenId);
+                }
+            }
+
+            if (!extractedTokenId) {
+                console.error("TOKEN ID EXTRACTION FAILED: No recognizable events found in logs");
+                console.log("LOGS:", receipt.logs);
+                throw new Error("Could not find Transfer or Mint event in transaction logs.");
+            }
+
+            tokenId = extractedTokenId;
+            console.log("FINAL TOKEN ID:", tokenId);
+
+            console.log("SENDING TO BACKEND:", {
+                tokenId,
+                productId: formData.productId
+            });
+
+            // Save to backend - Now including tokenId from LOGS
+            await fetch(`${API_URL}/api/products`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    productId: formData.productId,
+                    tokenId: tokenId,
+                    name: formData.name || formData.productId,
+                    batchNumber: formData.batchNumber,
+                    currentStage: 'Manufactured',
+                    currentOwner: directAccount.toLowerCase(),
+                    manufacturer: { walletAddress: directAccount.toLowerCase(), location: locationObj.address },
+                    manufacturingLocation: locationObj,
+                    checkpoints: [{
+                        stage: 'Manufactured',
+                        timestamp: new Date().toISOString(),
+                        location: locationObj,
+                        handler: directAccount.toLowerCase(),
+                        notes: formData.notes || 'Product manufactured',
+                        transactionHash: receipt.hash
+                    }]
+                })
+            });
+
+                if (showToast) {
+                    showToast({ type: 'productMinted', data: { productId: formData.productId, tokenId } });
+                }
+
+                if (!tokenId && (isConnected && contracts.supplyChainNFT)) {
+                    throw new Error("Token ID extraction failed");
+                }
+
+                navigate(`/product/${tokenId || formData.productId}`);
+            } catch (err) {
+                alert('Failed: ' + err.message);
+            } finally {
+                setLoading(false);
+            }
     };
 
     return (

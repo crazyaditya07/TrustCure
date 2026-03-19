@@ -44,8 +44,8 @@ const productSchema = new mongoose.Schema({
     tokenId: {
         type: Number,
         unique: true,
-        sparse: true,
-        index: true
+        index: true,
+        required: true
     },
     name: {
         type: String,

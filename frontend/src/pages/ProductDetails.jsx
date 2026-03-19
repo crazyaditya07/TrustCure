@@ -49,7 +49,7 @@ function ProductDetails() {
             });
 
             const response = await fetch(
-                `${API_URL}/api/products/${productId}/history?${params}`
+                `${API_URL}/api/products/${productId}?${params}`
             );
 
             if (!response.ok) {

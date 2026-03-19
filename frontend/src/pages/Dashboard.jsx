@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { ethers } from 'ethers';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
@@ -89,13 +90,31 @@ const Dashboard = () => {
             setLoading(true);
             setError(null);
 
-            const walletAddress = (user.walletAddress || user.wallet || '').toLowerCase();
+            // FORCE REAL WALLET (Bypass potential state/dummy delays)
+            let wallet = account;
+            if (!wallet && window.ethereum) {
+                try {
+                    const tempProvider = new ethers.BrowserProvider(window.ethereum);
+                    const tempSigner = await tempProvider.getSigner();
+                    wallet = await tempSigner.getAddress();
+                } catch (e) {
+                    console.log("Could not force wallet fetch:", e.message);
+                }
+            }
+            
+            // Final active wallet for API (lowercase for safety)
+            const activeWallet = (wallet || user?.walletAddress || '').toLowerCase();
+            
+            console.log("REAL WALLET:", activeWallet);
+            console.log("FETCHING PRODUCTS FOR:", activeWallet);
+            
             let fetchedProducts = [];
 
-            if (walletAddress) {
-                const productsResponse = await fetch(`${API_URL}/api/owner/${walletAddress}/products`);
+            if (activeWallet && activeWallet !== '0x1111111111111111111111111111111111111111') {
+                const productsResponse = await fetch(`${API_URL}/api/owner/${activeWallet}/products`);
                 if (productsResponse.ok) {
                     fetchedProducts = await productsResponse.json();
+                    console.log("ALL PRODUCTS FROM API:", fetchedProducts);
                 }
             } else {
                 // Email only fallback
@@ -103,18 +122,26 @@ const Dashboard = () => {
                 if (productsResponse.ok) {
                     const data = await productsResponse.json();
                     fetchedProducts = data.products || [];
+                    console.log("DASHBOARD: FETCHED PUBLIC PRODUCTS:", fetchedProducts);
                 }
             }
 
-            setProducts(fetchedProducts);
+            // Filter products to double-check ownership on frontend
+            const filteredProducts = fetchedProducts.filter(
+                (p) => p.currentOwner?.toLowerCase() === activeWallet.toLowerCase()
+            );
+            console.log("FILTERED PRODUCTS:", filteredProducts);
+
+            setProducts(filteredProducts);
+            console.log("DASHBOARD: STATE UPDATED WITH", filteredProducts.length, "PRODUCTS");
 
             // Derive stats from the SAME product list (single source of truth)
-            const ownedProducts = fetchedProducts.length;
-            const productsManufactured = fetchedProducts.filter(p => {
+            const ownedProducts = filteredProducts.length;
+            const productsManufactured = filteredProducts.filter(p => {
                 const mfgWallet = typeof p.manufacturer === 'object'
                     ? (p.manufacturer?.walletAddress || '').toLowerCase()
                     : '';
-                return mfgWallet === walletAddress;
+                return mfgWallet === activeWallet;
             }).length;
 
             // Count transfers from checkpoints
@@ -123,7 +150,7 @@ const Dashboard = () => {
             fetchedProducts.forEach(p => {
                 if (p.checkpoints && p.checkpoints.length > 0) {
                     p.checkpoints.forEach(cp => {
-                        if (cp.handler && cp.handler.toLowerCase() === walletAddress && cp.stage !== 'Manufactured') {
+                        if (cp.handler && cp.handler.toLowerCase() === activeWallet && cp.stage !== 'Manufactured') {
                             transfersIn++;
                         }
                     });
@@ -132,7 +159,7 @@ const Dashboard = () => {
 
             // Get outgoing transfers count from Transfer collection
             try {
-                const outRes = await fetch(`${API_URL}/api/transfers/outgoing/${walletAddress}`);
+                const outRes = await fetch(`${API_URL}/api/transfers/outgoing/${activeWallet}`);
                 if (outRes.ok) {
                     const outData = await outRes.json();
                     transfersOut = outData.length;

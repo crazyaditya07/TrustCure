@@ -3,7 +3,7 @@
   "network": "sepolia",
   "contracts": {
     "SupplyChainNFT": {
-      "address": "0xE7756e4346F5CeA0efe74b5430BC4BaA3e6c7Bb8",
+      "address": "0x313E14f51FEe170D19C3DCE9eFb03709E916510d",
       "abi": [
         {
           "inputs": [],
@@ -769,11 +769,6 @@
                   "type": "uint256"
                 },
                 {
-                  "internalType": "string",
-                  "name": "manufacturingLocation",
-                  "type": "string"
-                },
-                {
                   "internalType": "enum SupplyChainNFT.Stage",
                   "name": "currentStage",
                   "type": "uint8"
@@ -1022,11 +1017,6 @@
             },
             {
               "internalType": "string",
-              "name": "location",
-              "type": "string"
-            },
-            {
-              "internalType": "string",
               "name": "tokenURI",
               "type": "string"
             },
@@ -1176,11 +1166,6 @@
               "internalType": "uint256",
               "name": "manufacturingDate",
               "type": "uint256"
-            },
-            {
-              "internalType": "string",
-              "name": "manufacturingLocation",
-              "type": "string"
             },
             {
               "internalType": "enum SupplyChainNFT.Stage",
@@ -1503,7 +1488,7 @@
       ]
     },
     "AccessManager": {
-      "address": "0x688B05F394cDdE45c2d41967Bb358F638c907034",
+      "address": "0x3D6cAe6e72570fDF03f4B65Aa7417E524c2B4287",
       "abi": [
         {
           "inputs": [],

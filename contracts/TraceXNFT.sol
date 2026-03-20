@@ -43,7 +43,6 @@ contract SupplyChainNFT is ERC721, ERC721URIStorage, AccessControl {
         string productId;
         string batchNumber;
         uint256 manufacturingDate;
-        string manufacturingLocation;
         Stage currentStage;
         address currentOwner;
         bool exists;
@@ -102,7 +101,6 @@ contract SupplyChainNFT is ERC721, ERC721URIStorage, AccessControl {
     function mintProduct(
         string memory productId,
         string memory batchNumber,
-        string memory location,
         string memory tokenURI,
         string memory notes
     ) public onlyRole(MANUFACTURER_ROLE) returns (uint256) {
@@ -118,7 +116,6 @@ contract SupplyChainNFT is ERC721, ERC721URIStorage, AccessControl {
             productId: productId,
             batchNumber: batchNumber,
             manufacturingDate: block.timestamp,
-            manufacturingLocation: location,
             currentStage: Stage.Manufactured,
             currentOwner: msg.sender,
             exists: true
@@ -131,14 +128,14 @@ contract SupplyChainNFT is ERC721, ERC721URIStorage, AccessControl {
             productId: productId,
             batchNumber: batchNumber,
             timestamp: block.timestamp,
-            location: location,
+            location: "",
             stage: Stage.Manufactured,
             handler: msg.sender,
             notes: notes
         }));
         
         emit ProductMinted(tokenId, productId, batchNumber, msg.sender, block.timestamp);
-        emit CheckpointAdded(tokenId, Stage.Manufactured, location, msg.sender, block.timestamp);
+        emit CheckpointAdded(tokenId, Stage.Manufactured, "", msg.sender, block.timestamp);
         
         return tokenId;
     }

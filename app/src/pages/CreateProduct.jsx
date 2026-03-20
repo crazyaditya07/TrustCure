@@ -27,7 +27,6 @@ const CreateProduct = () => {
     description: '',
     batchNumber: '',
     expiryDate: '',
-    location: '',
   })
 
   const [transferForm, setTransferForm] = useState({
@@ -66,7 +65,6 @@ const CreateProduct = () => {
         description: '',
         batchNumber: '',
         expiryDate: '',
-        location: '',
       })
       setCertifications([])
     }, 3000)
@@ -264,22 +262,6 @@ const CreateProduct = () => {
                     </div>
                   </div>
 
-                  <div className="sm:col-span-2">
-                    <label className="block text-sm font-medium text-gray-400 mb-2">
-                      Manufacturing Location
-                    </label>
-                    <div className="relative">
-                      <MapPin className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-500" />
-                      <input
-                        type="text"
-                        required
-                        value={productForm.location}
-                        onChange={(e) => setProductForm({ ...productForm, location: e.target.value })}
-                        placeholder="e.g., New York, USA"
-                        className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500/50 focus:ring-2 focus:ring-indigo-500/20 transition-all"
-                      />
-                    </div>
-                  </div>
 
                   <div className="sm:col-span-2">
                     <label className="block text-sm font-medium text-gray-400 mb-2">

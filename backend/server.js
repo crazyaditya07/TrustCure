@@ -4,6 +4,15 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const http = require('http');
 console.log(`🔍 DEBUG: SEPOLIA_RPC_URL length=${process.env.SEPOLIA_RPC_URL?.length}, URL=${process.env.SEPOLIA_RPC_URL}`);
+
+// Suppress ethers v6 "filter not found" errors common with public RPC nodes
+process.on('unhandledRejection', (reason) => {
+    if (reason && reason.message && reason.message.includes('could not coalesce error') && reason.message.includes('filter not found')) {
+        return; // Ignore - ethers auto-recovers from this
+    }
+    console.error('Unhandled Rejection:', reason);
+});
+
 const { Server } = require('socket.io');
 const apiRoutes = require('./routes/api');
 const authRoutes = require('./routes/auth');

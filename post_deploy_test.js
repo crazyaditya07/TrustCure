@@ -49,14 +49,12 @@ async function runTest() {
         console.log(`\n📦 Minting new product...`);
         const testId = `TEST-${Math.floor(Math.random() * 10000)}`;
         const batch = `B-${Math.floor(Math.random() * 1000)}`;
-        const loc = "Test Facility";
         const uri = "ipfs://test-metadata";
         const note = "Automated post-deploy test mint";
 
         const mintTx = await contract.mintProduct(
             testId,
             batch,
-            loc,
             uri,
             note
         );

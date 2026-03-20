@@ -64,7 +64,7 @@ const TransferModal = ({ isOpen, onClose, product, onTransferInitiated }) => {
             }
             console.log("CONNECTED CONTRACT:", contract.target);
             console.log("SIGNER ADDRESS:", account);
-            console.log("EXPECTED CONTRACT: 0xE7756e4346F5CeA0efe74b5430BC4BaA3e6c7Bb8");
+            console.log("EXPECTED CONTRACT: 0x313E14f51FEe170D19C3DCE9eFb03709E916510d");
 
             // Validate ownership before call
             if (!product.currentOwner || account.toLowerCase() !== product.currentOwner.toLowerCase()) {

@@ -20,14 +20,12 @@ async function runTest() {
         console.log(`\n📦 Minting NEW product...`);
         const testId = `TEST-SYNC-${Math.floor(Math.random() * 10000)}`;
         const batch = `B-${Math.floor(Math.random() * 1000)}`;
-        const loc = "Test Facility";
         const uri = "ipfs://test-sync-metadata";
         const note = "Automated sync test mint";
 
         const mintTx = await contract.mintProduct(
             testId,
             batch,
-            loc,
             uri,
             note
         );

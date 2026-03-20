@@ -90,7 +90,6 @@ describe("Supply Chain Contracts", function () {
                 const tx = await supplyChainNFT.connect(manufacturer).mintProduct(
                     "PROD001",
                     "BATCH001",
-                    "Factory A, Mumbai",
                     "ipfs://metadata",
                     "Initial production"
                 );
@@ -112,7 +111,6 @@ describe("Supply Chain Contracts", function () {
                     supplyChainNFT.connect(distributor).mintProduct(
                         "PROD002",
                         "BATCH002",
-                        "Location",
                         "ipfs://metadata",
                         "Notes"
                     )
@@ -123,7 +121,6 @@ describe("Supply Chain Contracts", function () {
                 await supplyChainNFT.connect(manufacturer).mintProduct(
                     "PROD001",
                     "BATCH001",
-                    "Location",
                     "ipfs://metadata",
                     "Notes"
                 );
@@ -132,7 +129,6 @@ describe("Supply Chain Contracts", function () {
                     supplyChainNFT.connect(manufacturer).mintProduct(
                         "PROD001",
                         "BATCH002",
-                        "Location",
                         "ipfs://metadata",
                         "Notes"
                     )
@@ -147,7 +143,6 @@ describe("Supply Chain Contracts", function () {
                 await supplyChainNFT.connect(manufacturer).mintProduct(
                     "PROD001",
                     "BATCH001",
-                    "Factory A, Mumbai",
                     "ipfs://metadata",
                     "Initial production"
                 );
@@ -260,7 +255,6 @@ describe("Supply Chain Contracts", function () {
                 await supplyChainNFT.connect(manufacturer).mintProduct(
                     "PROD001",
                     "BATCH001",
-                    "Factory",
                     "ipfs://metadata",
                     "Notes"
                 );
@@ -309,7 +303,6 @@ describe("Supply Chain Contracts", function () {
                     supplyChainNFT.connect(manufacturer).mintProduct(
                         "PROD001",
                         "BATCH001",
-                        "Factory",
                         "ipfs://metadata",
                         "Notes"
                     )
@@ -320,7 +313,6 @@ describe("Supply Chain Contracts", function () {
                 await supplyChainNFT.connect(manufacturer).mintProduct(
                     "PROD001",
                     "BATCH001",
-                    "Factory",
                     "ipfs://metadata",
                     "Notes"
                 );

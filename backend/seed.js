@@ -160,13 +160,12 @@ async function seedProducts(count = 50) {
                 retailer_id: retailer._id,
                 consumer_id: consumer._id,
                 manufacturer: {
-                    walletAddress: manufacturer.walletAddress,
-                    name: manufacturer.name,
-                    email: manufacturer.email,
-                    location: 'Ahmedabad, India'
+                    walletAddress: checkpoints[0].handler,
+                    name: 'Farmson Pharmaceutical',
+                    email: 'mfg@pharma.com',
+                    location: checkpoints[0].location.address
                 },
                 manufacturingDate: createdDate,
-                manufacturingLocation: checkpoints[0].location,
                 checkpoints: checkpoints,
                 qrCode: qrCodeDataUrl,
                 metadata: {

@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router-dom';
 import { useWeb3 } from '../contexts/Web3Context';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotifications } from '../contexts/NotificationContext';
-import { geocodeAddress } from '../services/geocoding';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
@@ -21,16 +20,11 @@ function CreateProduct() {
         productId: '',
         name: '',
         batchNumber: '',
-        location: '',
         notes: ''
     });
 
     const handleChange = (e) => {
         setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
-        // Clear geocode result when location changes
-        if (e.target.name === 'location') {
-            setGeocodeResult(null);
-        }
     };
 
     const generateProductId = () => {
@@ -38,35 +32,10 @@ function CreateProduct() {
         setFormData(prev => ({ ...prev, productId: id }));
     };
 
-    // Debounced geocoding
-    const handleGeocodeLocation = useCallback(async () => {
-        if (!formData.location || formData.location.trim().length < 3) {
-            return;
-        }
-
-        setGeocoding(true);
-        try {
-            const result = await geocodeAddress(formData.location);
-            setGeocodeResult(result);
-        } catch (err) {
-            console.error('Geocoding failed:', err);
-            setGeocodeResult(null);
-        } finally {
-            setGeocoding(false);
-        }
-    }, [formData.location]);
-
-    // Auto-geocode when user stops typing for 1 second
-    useEffect(() => {
-        if (formData.location.length >= 3) {
-            const timer = setTimeout(handleGeocodeLocation, 1000);
-            return () => clearTimeout(timer);
-        }
-    }, [formData.location, handleGeocodeLocation]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!formData.productId || !formData.batchNumber || !formData.location) return;
+        if (!formData.productId || !formData.batchNumber) return;
 
         // Check if we have either wallet connection or email auth
         const canCreate = (isConnected && contracts.supplyChainNFT) || isAuthenticated;
@@ -76,20 +45,9 @@ function CreateProduct() {
             return;
         }
 
-        try {
-            setLoading(true);
-            let tokenId;
-
-            // Build location object with coordinates if available
-            const locationObj = {
-                address: formData.location,
-                city: geocodeResult?.city || '',
-                country: geocodeResult?.country || '',
-                coordinates: geocodeResult ? {
-                    lat: geocodeResult.lat,
-                    lng: geocodeResult.lng
-                } : null
-            };
+            try {
+                setLoading(true);
+                let tokenId;
 
             // Step 1 - Check Ethereum
             if (!window.ethereum) {
@@ -126,9 +84,9 @@ function CreateProduct() {
             console.log("DIRECT SIGNER ACCOUNT:", directAccount);
             
             // Step 5 - Initialize Contract Directly
-            const contractAddress = "0xDaea19dE3b36a502eD6F56b53dc878D9428a6618";
+            const contractAddress = "0x313E14f51FEe170D19C3DCE9eFb03709E916510d";
             const contractABI = [
-                "function mintProduct(string productId, string batchNumber, string location, string tokenURI, string notes) public returns (uint256)",
+                "function mintProduct(string productId, string batchNumber, string tokenURI, string notes) public returns (uint256)",
                 "function name() public view returns (string)",
                 "event Transfer(address indexed from, address indexed to, uint256 indexed tokenId)",
                 "event ProductMinted(uint256 indexed tokenId, string productId, string batchNumber, address indexed manufacturer, uint256 timestamp)",
@@ -153,7 +111,7 @@ function CreateProduct() {
             console.log("FINAL ACCOUNT USED:", directAccount);
             
             const tx = await contract.mintProduct(
-                formData.productId, formData.batchNumber, formData.location, tokenURI, formData.notes
+                formData.productId, formData.batchNumber, tokenURI, formData.notes
             );
             
             console.log("MINT TX SENT:", tx.hash);
@@ -224,12 +182,11 @@ function CreateProduct() {
                     batchNumber: formData.batchNumber,
                     currentStage: 'Manufactured',
                     currentOwner: directAccount.toLowerCase(),
-                    manufacturer: { walletAddress: directAccount.toLowerCase(), location: locationObj.address },
-                    manufacturingLocation: locationObj,
+                    manufacturer: { walletAddress: directAccount.toLowerCase() },
                     checkpoints: [{
                         stage: 'Manufactured',
                         timestamp: new Date().toISOString(),
-                        location: locationObj,
+                        location: {},
                         handler: directAccount.toLowerCase(),
                         notes: formData.notes || 'Product manufactured',
                         transactionHash: receipt.hash
@@ -280,46 +237,6 @@ function CreateProduct() {
                 <div className="form-group">
                     <label className="form-label">Batch Number *</label>
                     <input type="text" name="batchNumber" className="form-input" value={formData.batchNumber} onChange={handleChange} required placeholder="e.g., BATCH-2026-001" />
-                </div>
-                <div className="form-group">
-                    <label className="form-label">Manufacturing Location *</label>
-                    <input
-                        type="text"
-                        name="location"
-                        className="form-input"
-                        value={formData.location}
-                        onChange={handleChange}
-                        required
-                        placeholder="e.g., Mumbai, India"
-                    />
-                    {/* Geocoding status */}
-                    {geocoding && (
-                        <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--text-tertiary)', marginTop: '4px' }}>
-                            🔍 Looking up coordinates...
-                        </p>
-                    )}
-                    {geocodeResult && (
-                        <div style={{
-                            marginTop: '8px',
-                            padding: '8px 12px',
-                            background: 'var(--glass-bg)',
-                            borderRadius: '8px',
-                            fontSize: 'var(--font-size-sm)'
-                        }}>
-                            <p style={{ margin: '0 0 4px', color: 'var(--accent-emerald)' }}>✓ Location found</p>
-                            <p style={{ margin: '0', color: 'var(--text-secondary)', fontSize: 'var(--font-size-xs)' }}>
-                                {geocodeResult.display_name}
-                            </p>
-                            <p style={{ margin: '4px 0 0', color: 'var(--text-tertiary)', fontFamily: 'monospace', fontSize: 'var(--font-size-xs)' }}>
-                                📍 {geocodeResult.lat.toFixed(4)}, {geocodeResult.lng.toFixed(4)}
-                            </p>
-                        </div>
-                    )}
-                    {!geocoding && formData.location.length >= 3 && !geocodeResult && (
-                        <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--text-tertiary)', marginTop: '4px' }}>
-                            ⚠️ Could not find coordinates - map will not display for this product
-                        </p>
-                    )}
                 </div>
                 <div className="form-group">
                     <label className="form-label">Notes</label>

@@ -95,15 +95,6 @@ const productSchema = new mongoose.Schema({
         location: String
     },
     manufacturingDate: Date,
-    manufacturingLocation: {
-        address: String,
-        city: String,
-        country: String,
-        coordinates: {
-            lat: Number,
-            lng: Number
-        }
-    },
     checkpoints: [checkpointSchema],
     qrCode: String, // Base64 encoded QR code image
     tokenURI: String,

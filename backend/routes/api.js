@@ -265,8 +265,10 @@ router.get('/products/:productId/history', async (req, res) => {
     }
 });
 
-// Create or update product (synced from blockchain)
-// NOTE: Primary creation now happens through eventListener.js
+// Create or update product (fast-path sync from frontend after blockchain confirm)
+// NOTE: Canonical creation happens through eventListener.js (ProductMinted event).
+//       This POST enriches the record with UI-supplied fields (name, notes, etc.)
+//       and backfills manufacturer_id if not already set by the event listener.
 router.post('/products', async (req, res) => {
     try {
         const productData = req.body;
@@ -278,15 +280,37 @@ router.post('/products', async (req, res) => {
             return res.status(400).json({ error: 'tokenId is required for product synchronization' });
         }
 
+        // Auto-populate manufacturer_id from wallet lookup so enrichProducts() works
+        if (productData.currentOwner && !productData.manufacturer_id) {
+            const mfgUser = await User.findOne({ walletAddress: productData.currentOwner.toLowerCase() });
+            if (mfgUser) {
+                productData.manufacturer_id = mfgUser._id;
+                // Enrich the manufacturer sub-document too if not already set
+                if (!productData.manufacturer || !productData.manufacturer.name) {
+                    productData.manufacturer = {
+                        walletAddress: mfgUser.walletAddress,
+                        name: mfgUser.name || '',
+                        email: mfgUser.email || '',
+                        location: mfgUser.location || ''
+                    };
+                }
+            }
+        }
+
+        // Normalise currentOwner to lowercase
+        if (productData.currentOwner) {
+            productData.currentOwner = productData.currentOwner.toLowerCase();
+        }
+
         const product = await Product.findOneAndUpdate(
-            { tokenId: productData.tokenId }, // Use tokenId as primary key for consensus
+            { tokenId: productData.tokenId }, // tokenId is canonical key
             { 
                ...productData,
                productId: productData.productId || `TRX-${Math.random().toString(36).substring(2, 10).toUpperCase()}`
             },
             { upsert: true, new: true }
         );
-        console.log("BACKEND: SAVED/UPDATED PRODUCT:", product);
+        console.log("BACKEND: SAVED/UPDATED PRODUCT:", product._id, "| Owner:", product.currentOwner);
 
         res.json(product);
     } catch (error) {

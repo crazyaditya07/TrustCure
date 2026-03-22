@@ -22,6 +22,9 @@ import { io } from 'socket.io-client';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
+// Truncate a wallet address for display: 0x3f12...858e
+const truncateWallet = (w) => (w && w.length > 10) ? `${w.slice(0, 6)}…${w.slice(-4)}` : (w || '');
+
 const Dashboard = () => {
     const { user, isAuthenticated } = useAuth();
     const [stats, setStats] = useState(null);
@@ -190,6 +193,12 @@ const Dashboard = () => {
             'Sold': 'sold'
         };
 
+        // Build a human-readable owner display — never show 'Unknown'
+        const ownerWallet = (p.currentOwner || '').toLowerCase();
+        const ownerDisplay = p.currentOwnerName && p.currentOwnerName !== 'Unknown'
+            ? p.currentOwnerName
+            : truncateWallet(ownerWallet);
+
         return {
             id: p._id,
             tokenId: p.productId,
@@ -197,8 +206,8 @@ const Dashboard = () => {
             name: p.name || p.productId,
             description: p.description || `Batch: ${p.batchNumber}`,
             manufacturer: p.manufacturer || 'Unknown',
-            currentOwner: p.currentOwnerName || p.owner || 'Unknown',
-            currentOwnerWallet: (p.currentOwner || '').toLowerCase(),
+            currentOwner: ownerDisplay || 'N/A',
+            currentOwnerWallet: ownerWallet,
             createdAt: p.timestamp || new Date().toISOString(),
             status: stageMap[p.currentStage] || 'manufactured',
             transferStatus: p.transferStatus,
@@ -313,7 +322,7 @@ const Dashboard = () => {
                                         key={product._id || index} 
                                         product={mapProduct(product)} 
                                         index={index}
-                                        currentUserWallet={(user?.walletAddress || user?.wallet || '').toLowerCase()}
+                                        currentUserWallet={(account || user?.walletAddress || user?.wallet || '').toLowerCase()}
                                         onTransfer={() => handleOpenTransfer(mapProduct(product))}
                                     />
                                 ))}

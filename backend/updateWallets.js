@@ -1,57 +1,59 @@
 const mongoose = require('mongoose');
+require('dotenv').config({ path: '../.env' });
 const User = require('./models/User');
-require('dotenv').config();
 
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/tracex';
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/tracex_db';
+
+const targetWallets = {
+    MANUFACTURER: '0x3f127F2FfdFE92D2C5BdB075eb0B77682F7B858E',
+    DISTRIBUTOR: '0xAb12836A055813ca2c2bDC7e7f4e2A02B0F95D14',
+    RETAILER: '0xc4d10b41CFc25CCe0455269E203593a1abB6cd6e'
+};
+
+const emails = {
+    MANUFACTURER: 'mfg@pharma.com',
+    DISTRIBUTOR: 'dist@pharma.com',
+    RETAILER: 'retail@pharma.com'
+};
 
 async function updateWallets() {
-  try {
-    await mongoose.connect(MONGODB_URI);
-    console.log('Connected to MongoDB');
+    try {
+        await mongoose.connect(MONGODB_URI);
+        console.log('✅ Connected to MongoDB');
 
-    const updates = [
-      { 
-        role: 'MANUFACTURER', 
-        wallet: '0x3f127F2FfdFE92D2C5BdB075eb0B77682F7B858E',
-        email: 'mfg@pharma.com',
-        name: 'Pharma Manufacturer'
-      },
-      { 
-        role: 'DISTRIBUTOR', 
-        wallet: '0xAb12836A055813ca2c2bDC7e7f4e2A02B0F95D14',
-        email: 'dist@logistics.com',
-        name: 'Logistics Distributor'
-      },
-      { 
-        role: 'RETAILER', 
-        wallet: '0xc4d10b41CFc25CCe0455269E203593a1abB6cd6e',
-        email: 'retail@pharmacy.com',
-        name: 'City Retailer'
-      }
-    ];
+        for (const [role, newWallet] of Object.entries(targetWallets)) {
+            const email = emails[role];
+            const lowerWallet = newWallet.toLowerCase();
 
-    for (const item of updates) {
-      const walletLower = item.wallet.toLowerCase();
-      const result = await User.findOneAndUpdate(
-        { walletAddress: walletLower },
-        { 
-          walletAddress: walletLower,
-          role: item.role,
-          roles: [item.role],
-          email: item.email,
-          name: item.name,
-          isVerified: true
-        },
-        { new: true, upsert: true }
-      );
-      console.log(`Updated/Created ${item.role}: ${result.walletAddress}`);
+            // 1. Remove ANY other user that has this wallet but NOT the correct email
+            // This clears "ghost" accounts or accidental registrations
+            const cleanup = await User.deleteMany({
+                walletAddress: lowerWallet,
+                email: { $ne: email }
+            });
+            if (cleanup.deletedCount > 0) {
+                console.log(`🧹 Cleared ${cleanup.deletedCount} conflicting record(s) for wallet ${lowerWallet}`);
+            }
+
+            // 2. Update the target user
+            const result = await User.updateOne(
+                { email: email },
+                { $set: { walletAddress: lowerWallet } }
+            );
+            
+            if (result.matchedCount > 0) {
+                console.log(`✅ Updated ${role} (${email}) to wallet: ${lowerWallet}`);
+            } else {
+                console.log(`⚠️ User ${email} not found!`);
+            }
+        }
+
+        console.log('🎉 Wallet update complete!');
+        process.exit(0);
+    } catch (err) {
+        console.error('❌ Error updating wallets:', err);
+        process.exit(1);
     }
-
-    await mongoose.disconnect();
-    console.log('Done.');
-  } catch (error) {
-    console.error('Error:', error);
-  }
 }
 
 updateWallets();

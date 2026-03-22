@@ -1,0 +1,41 @@
+{
+  "manufacturer": {
+    "walletAddress": "0x3f127f2ffdfe92d2c5bdb075eb0b77682f7b858e",
+    "name": "",
+    "email": ""
+  },
+  "metadata": {
+    "certifications": [],
+    "materials": []
+  },
+  "_id": "69c045232b26c674edebdca6",
+  "tokenId": 2,
+  "__v": 0,
+  "batchNumber": "2",
+  "checkpoints": [
+    {
+      "timestamp": "2026-03-22T19:38:12.000Z",
+      "stage": "Manufactured",
+      "handler": "0x3f127f2ffdfe92d2c5bdb075eb0b77682f7b858e",
+      "handlerName": "",
+      "handlerEmail": "",
+      "notes": "Product manufactured and minted on blockchain",
+      "transactionHash": "0x510b85f2a86e2e04129db41368cfe2b3716ea2c3330079e68030d815a0cd81db"
+    }
+  ],
+  "createdAt": "2026-03-22T19:38:11.966Z",
+  "currentOwner": "0x3f127f2ffdfe92d2c5bdb075eb0b77682f7b858e",
+  "currentStage": "Manufactured",
+  "isActive": true,
+  "manufacturer_id": {
+    "_id": "69bc69762b26c674edebdc97"
+  },
+  "manufacturingDate": "2026-03-22T19:38:12.000Z",
+  "name": "2",
+  "pendingTransferId": null,
+  "productId": "2",
+  "status": "Manufactured",
+  "transferStatus": "none",
+  "updatedAt": "2026-03-22T19:38:11.966Z",
+  "currentOwnerName": "Unknown"
+}

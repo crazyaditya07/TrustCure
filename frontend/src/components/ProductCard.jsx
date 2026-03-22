@@ -19,6 +19,9 @@ const statusConfig = {
   sold: { label: 'Sold', color: 'bg-green-500', icon: CheckCircle2 },
 }
 
+// Truncate a wallet address for compact display: 0x3f12…858e
+const truncateWallet = (w) => (w && w.length > 10) ? `${w.slice(0, 6)}…${w.slice(-4)}` : (w || '');
+
 const ProductCard = ({ product, index = 0, onTransfer, currentUserWallet }) => {
   const status = statusConfig[product.status] || statusConfig.manufactured
   const StatusIcon = status.icon
@@ -93,7 +96,12 @@ const ProductCard = ({ product, index = 0, onTransfer, currentUserWallet }) => {
           <div className="flex items-center gap-2 text-sm">
             <MapPin className="w-4 h-4 text-gray-500" />
             <span className="text-gray-400">Current Owner:</span>
-            <span className="text-white truncate max-w-[150px]">{product.currentOwner}</span>
+            <span
+              className="text-white truncate max-w-[150px]"
+              title={product.currentOwnerWallet || ''}
+            >
+              {product.currentOwner || truncateWallet(product.currentOwnerWallet) || 'N/A'}
+            </span>
           </div>
         </div>
 

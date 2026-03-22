@@ -1,5 +1,6 @@
 const { ethers } = require('ethers');
 const Product = require('../models/Product');
+const User = require('../models/User');
 const fs = require('fs');
 const path = require('path');
 
@@ -36,6 +37,84 @@ async function startEventListener(io) {
             console.log("🔗 Contract instance created successfully");
         }
 
+        // ─────────────────────────────────────────────────────────
+        // Handler: ProductMinted — SOURCE OF TRUTH for new products
+        // ─────────────────────────────────────────────────────────
+        contract.on("ProductMinted", async (tokenId, productId, batchNumber, manufacturer, timestamp, event) => {
+            const txHash = event.log.transactionHash;
+            const manufacturerAddr = manufacturer.toLowerCase();
+            console.log(`🔔 EVENT CAUGHT: ProductMinted | TokenID: ${tokenId} | ProductID: ${productId} | Manufacturer: ${manufacturerAddr} | TxHash: ${txHash}`);
+
+            try {
+                // Duplicate protection
+                const existing = await Product.findOne({ tokenId: Number(tokenId) });
+                if (existing) {
+                    const isDuplicate = existing.checkpoints.some(cp => cp.transactionHash === txHash);
+                    if (isDuplicate) {
+                        return console.log(`⏭️ Duplicate ProductMinted event skipped: ${txHash}`);
+                    }
+                }
+
+                // Look up manufacturer User record to set manufacturer_id
+                const mfgUser = await User.findOne({ walletAddress: manufacturerAddr });
+
+                const productDoc = {
+                    tokenId: Number(tokenId),
+                    productId: productId,
+                    name: productId, // Will be enriched by frontend POST if present
+                    batchNumber: batchNumber,
+                    currentStage: 'Manufactured',
+                    status: 'Manufactured',
+                    currentOwner: manufacturerAddr,
+                    manufacturer: {
+                        walletAddress: manufacturerAddr,
+                        name: mfgUser?.name || '',
+                        email: mfgUser?.email || '',
+                    },
+                    manufacturingDate: new Date(Number(timestamp) * 1000),
+                    isActive: true,
+                    transferStatus: 'none',
+                };
+
+                if (mfgUser) {
+                    productDoc.manufacturer_id = mfgUser._id;
+                }
+
+                const savedProduct = await Product.findOneAndUpdate(
+                    { tokenId: Number(tokenId) },
+                    {
+                        $set: productDoc,
+                        $push: {
+                            checkpoints: {
+                                timestamp: new Date(Number(timestamp) * 1000),
+                                location: {},
+                                stage: 'Manufactured',
+                                handler: manufacturerAddr,
+                                handlerName: mfgUser?.name || '',
+                                handlerEmail: mfgUser?.email || '',
+                                notes: 'Product manufactured and minted on blockchain',
+                                transactionHash: txHash,
+                            }
+                        }
+                    },
+                    { upsert: true, new: true }
+                );
+
+                console.log(`✅ MongoDB Upserted: ProductMinted TokenID ${tokenId} -> Owner: ${manufacturerAddr}`);
+
+                if (io) {
+                    io.emit("productMinted", {
+                        tokenId: Number(tokenId),
+                        productId,
+                        manufacturer: manufacturerAddr,
+                        txHash
+                    });
+                }
+            } catch (err) {
+                console.error(`❌ Error in ProductMinted handler:`, err);
+            }
+        });
+
         // Handler for TransferredToDistributor
         contract.on("TransferredToDistributor", async (tokenId, distributor, event) => {
             const txHash = event.log.transactionHash;
@@ -51,22 +130,27 @@ async function startEventListener(io) {
                     return console.log(`⏭️ Duplicate event skipped: ${txHash}`);
                 }
 
-                product.currentOwner = distributor.toLowerCase();
+                const distAddr = distributor.toLowerCase();
+                const distUser = await User.findOne({ walletAddress: distAddr });
+
+                product.currentOwner = distAddr;
                 product.status = "IN_TRANSIT";
                 product.currentStage = "InDistribution";
+                if (distUser) product.distributor_id = distUser._id;
                 
                 // Add checkpoint
                 product.checkpoints.push({
                     timestamp: new Date(),
                     location: { address: "In Transit" },
                     stage: "InDistribution",
-                    handler: distributor.toLowerCase(),
+                    handler: distAddr,
+                    handlerName: distUser?.name || '',
                     transactionHash: txHash,
                     notes: "Transferred to Distributor"
                 });
 
                 await product.save();
-                console.log(`✅ MongoDB Updated: TokenID ${tokenId} -> IN_TRANSIT`);
+                console.log(`✅ MongoDB Updated: TokenID ${tokenId} -> IN_TRANSIT | Owner: ${distAddr}`);
                 
                 if (io) io.emit("productUpdate", { tokenId: Number(tokenId), status: "IN_TRANSIT" });
             } catch (err) {
@@ -88,21 +172,26 @@ async function startEventListener(io) {
                     return console.log(`⏭️ Duplicate event skipped: ${txHash}`);
                 }
 
-                product.currentOwner = retailer.toLowerCase();
+                const retailAddr = retailer.toLowerCase();
+                const retailUser = await User.findOne({ walletAddress: retailAddr });
+
+                product.currentOwner = retailAddr;
                 product.status = "DELIVERED";
                 product.currentStage = "InRetail";
+                if (retailUser) product.retailer_id = retailUser._id;
 
                 product.checkpoints.push({
                     timestamp: new Date(),
                     location: { address: "Retail Store" },
                     stage: "InRetail",
-                    handler: retailer.toLowerCase(),
+                    handler: retailAddr,
+                    handlerName: retailUser?.name || '',
                     transactionHash: txHash,
                     notes: "Transferred to Retailer"
                 });
 
                 await product.save();
-                console.log(`✅ MongoDB Updated: TokenID ${tokenId} -> DELIVERED`);
+                console.log(`✅ MongoDB Updated: TokenID ${tokenId} -> DELIVERED | Owner: ${retailAddr}`);
                 
                 if (io) io.emit("productUpdate", { tokenId: Number(tokenId), status: "DELIVERED" });
             } catch (err) {

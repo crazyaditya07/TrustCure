@@ -263,11 +263,21 @@ export function Web3Provider({ children }) {
         window.ethereum.on('accountsChanged', handleAccountsChanged);
         window.ethereum.on('chainChanged', handleChainChanged);
 
-        // DO NOT auto-connect - only respond to explicit user action
-        // Simply mark as initialized and let user click "Connect Wallet"
-        console.log('📱 Web3 initialized - waiting for user to connect wallet');
-        initialized.current = true;
-        setLoading(false);
+        // Check if wallet is already connected and authorized silently
+        window.ethereum.request({ method: 'eth_accounts' })
+            .then(accounts => {
+                if (accounts.length > 0) {
+                    console.log('📱 Found already authorized wallet, auto-connecting silently...');
+                    connectWallet(false); // Connect without forcing a session save
+                } else {
+                    console.log('📱 Web3 initialized - waiting for user to explicitly connect wallet');
+                }
+            })
+            .catch(console.error)
+            .finally(() => {
+                initialized.current = true;
+                setLoading(false);
+            });
 
         return () => {
             if (window.ethereum.removeListener) {

@@ -8,6 +8,9 @@ const eventSchema = new mongoose.Schema({
             'ProductMinted',
             'CheckpointAdded',
             'ProductTransferred',
+            'TransferredToDistributor',
+            'TransferredToRetailer',
+            'ProductSold',
             'RoleGrantedToUser',
             'ParticipantRegistered',
             'ParticipantDeactivated'

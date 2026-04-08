@@ -138,43 +138,23 @@ const Dashboard = () => {
             setProducts(filteredProducts);
             console.log("DASHBOARD: STATE UPDATED WITH", filteredProducts.length, "PRODUCTS");
 
-            // Derive stats from the SAME product list (single source of truth)
-            const ownedProducts = filteredProducts.length;
-            const productsManufactured = filteredProducts.filter(p => {
-                const mfgWallet = typeof p.manufacturer === 'object'
-                    ? (p.manufacturer?.walletAddress || '').toLowerCase()
-                    : '';
-                return mfgWallet === activeWallet;
-            }).length;
-
-            // Count transfers from checkpoints
-            let transfersIn = 0;
-            let transfersOut = 0;
-            fetchedProducts.forEach(p => {
-                if (p.checkpoints && p.checkpoints.length > 0) {
-                    p.checkpoints.forEach(cp => {
-                        if (cp.handler && cp.handler.toLowerCase() === activeWallet && cp.stage !== 'Manufactured') {
-                            transfersIn++;
-                        }
-                    });
-                }
-            });
-
-            // Get outgoing transfers count from Transfer collection
+            // Fetch unified stats reliably from Event timeline and Product queries via API
             try {
-                const outRes = await fetch(`${API_URL}/api/transfers/outgoing/${activeWallet}`);
-                if (outRes.ok) {
-                    const outData = await outRes.json();
-                    transfersOut = outData.length;
+                const statsRes = await fetch(`${API_URL}/api/stats/${activeWallet}`);
+                if (statsRes.ok) {
+                    const statsData = await statsRes.json();
+                    setStats({
+                        ownedProducts: statsData.ownedProducts || 0,
+                        productsManufactured: statsData.productsManufactured || 0,
+                        transfersIn: statsData.transfersIn || 0,
+                        transfersOut: statsData.transfersOut || 0
+                    });
+                } else {
+                    setStats({ ownedProducts: filteredProducts.length, productsManufactured: 0, transfersIn: 0, transfersOut: 0 });
                 }
-            } catch (_) { /* non-critical */ }
-
-            setStats({
-                ownedProducts,
-                productsManufactured,
-                transfersIn,
-                transfersOut
-            });
+            } catch (_) { 
+                 setStats({ ownedProducts: filteredProducts.length, productsManufactured: 0, transfersIn: 0, transfersOut: 0 });
+            }
 
         } catch (err) {
             console.error('Failed to fetch dashboard data:', err);

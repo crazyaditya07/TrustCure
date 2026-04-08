@@ -1,6 +1,7 @@
 const { ethers } = require('ethers');
 const Product = require('../models/Product');
 const User = require('../models/User');
+const Event = require('../models/Event');
 const fs = require('fs');
 const path = require('path');
 
@@ -110,6 +111,29 @@ async function startEventListener(io) {
                         txHash
                     });
                 }
+                
+                // Log Event for Action History
+                try {
+                    const tx = await provider.getTransaction(txHash);
+                    if (tx) {
+                        await Event.findOneAndUpdate(
+                            { transactionHash: txHash, eventType: "ProductMinted" },
+                            {
+                                eventType: "ProductMinted",
+                                transactionHash: txHash,
+                                from: tx.from.toLowerCase(),
+                                to: manufacturerAddr,
+                                productId: productId,
+                                tokenId: Number(tokenId),
+                                timestamp: new Date(Number(timestamp) * 1000),
+                                blockNumber: event.log.blockNumber
+                            },
+                            { upsert: true }
+                        );
+                    }
+                } catch (e) {
+                    console.error("Failed to log ProductMinted event to history:", e);
+                }
             } catch (err) {
                 console.error(`❌ Error in ProductMinted handler:`, err);
             }
@@ -153,6 +177,29 @@ async function startEventListener(io) {
                 console.log(`✅ MongoDB Updated: TokenID ${tokenId} -> IN_TRANSIT | Owner: ${distAddr}`);
                 
                 if (io) io.emit("productUpdate", { tokenId: Number(tokenId), status: "IN_TRANSIT" });
+
+                // Log Event for Action History
+                try {
+                    const tx = await provider.getTransaction(txHash);
+                    if (tx) {
+                        await Event.findOneAndUpdate(
+                            { transactionHash: txHash, eventType: "TransferredToDistributor" },
+                            {
+                                eventType: "TransferredToDistributor",
+                                transactionHash: txHash,
+                                from: tx.from.toLowerCase(),
+                                to: distAddr,
+                                productId: product.productId,
+                                tokenId: Number(tokenId),
+                                timestamp: new Date(),
+                                blockNumber: event.log.blockNumber
+                            },
+                            { upsert: true }
+                        );
+                    }
+                } catch (e) {
+                    console.error("Failed to log TransferredToDistributor event to history:", e);
+                }
             } catch (err) {
                 console.error(`❌ Error in TransferredToDistributor handler:`, err);
             }
@@ -194,6 +241,29 @@ async function startEventListener(io) {
                 console.log(`✅ MongoDB Updated: TokenID ${tokenId} -> DELIVERED | Owner: ${retailAddr}`);
                 
                 if (io) io.emit("productUpdate", { tokenId: Number(tokenId), status: "DELIVERED" });
+
+                // Log Event for Action History
+                try {
+                    const tx = await provider.getTransaction(txHash);
+                    if (tx) {
+                        await Event.findOneAndUpdate(
+                            { transactionHash: txHash, eventType: "TransferredToRetailer" },
+                            {
+                                eventType: "TransferredToRetailer",
+                                transactionHash: txHash,
+                                from: tx.from.toLowerCase(),
+                                to: retailAddr,
+                                productId: product.productId,
+                                tokenId: Number(tokenId),
+                                timestamp: new Date(),
+                                blockNumber: event.log.blockNumber
+                            },
+                            { upsert: true }
+                        );
+                    }
+                } catch (e) {
+                    console.error("Failed to log TransferredToRetailer event to history:", e);
+                }
             } catch (err) {
                 console.error(`❌ Error in TransferredToRetailer handler:`, err);
             }
@@ -228,6 +298,28 @@ async function startEventListener(io) {
                 console.log(`✅ MongoDB Updated: TokenID ${tokenId} -> SOLD`);
                 
                 if (io) io.emit("productUpdate", { tokenId: Number(tokenId), status: "SOLD" });
+
+                // Log Event for Action History
+                try {
+                    const tx = await provider.getTransaction(txHash);
+                    if (tx) {
+                        await Event.findOneAndUpdate(
+                            { transactionHash: txHash, eventType: "ProductSold" },
+                            {
+                                eventType: "ProductSold",
+                                transactionHash: txHash,
+                                from: tx.from.toLowerCase(),
+                                productId: product.productId,
+                                tokenId: Number(tokenId),
+                                timestamp: new Date(),
+                                blockNumber: event.log.blockNumber
+                            },
+                            { upsert: true }
+                        );
+                    }
+                } catch (e) {
+                    console.error("Failed to log ProductSold event to history:", e);
+                }
             } catch (err) {
                 console.error(`❌ Error in ProductSold handler:`, err);
             }

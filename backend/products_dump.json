@@ -1,0 +1,123 @@
+[
+  {
+    "manufacturer": {
+      "walletAddress": "0x3f127f2ffdfe92d2c5bdb075eb0b77682f7b858e",
+      "name": "Farmson Pharmaceutical",
+      "email": "mfg@pharma.com"
+    },
+    "metadata": {
+      "certifications": [],
+      "materials": []
+    },
+    "_id": "69c0558d2b26c674edebdca7",
+    "tokenId": 3,
+    "__v": 3,
+    "batchNumber": "1",
+    "checkpoints": [
+      {
+        "timestamp": "2026-03-22T20:47:48.000Z",
+        "stage": "Manufactured",
+        "handler": "0x3f127f2ffdfe92d2c5bdb075eb0b77682f7b858e",
+        "handlerName": "Farmson Pharmaceutical",
+        "handlerEmail": "mfg@pharma.com",
+        "notes": "Product manufactured and minted on blockchain",
+        "transactionHash": "0x1248b27a2d37cc6b8d181dec4069de542af17d14810ceff381a328143fd91708"
+      },
+      {
+        "location": {
+          "address": "In Transit"
+        },
+        "timestamp": "2026-03-22T20:50:01.858Z",
+        "stage": "InDistribution",
+        "handler": "0xab12836a055813ca2c2bdc7e7f4e2a02b0f95d14",
+        "handlerName": "Amol Pharmaceuticals",
+        "notes": "Transferred to Distributor",
+        "transactionHash": "0x2a4562b9fd884aff1683d3f21b417d9abc39336ccc5c512f4a5dbb1553420486"
+      },
+      {
+        "location": {
+          "address": "Retail Store"
+        },
+        "timestamp": "2026-03-23T06:00:26.177Z",
+        "stage": "InRetail",
+        "handler": "0xc4d10b41cfc25cce0455269e203593a1abb6cd6e",
+        "handlerName": "Aditya Pharmacy",
+        "notes": "Transferred to Retailer",
+        "transactionHash": "0xe614e194863f0056adc3c7bde4a12e4fd9f504bd042ae8ba3c8111a963f079db"
+      },
+      {
+        "location": {
+          "address": "Customer"
+        },
+        "timestamp": "2026-04-06T20:06:12.246Z",
+        "stage": "Sold",
+        "notes": "Product Sold",
+        "transactionHash": "0xac1f619393188ff98d034437a0c80b3c7089f3a36960d93a53d192e5c231a94a"
+      }
+    ],
+    "createdAt": "2026-03-22T20:48:13.423Z",
+    "currentOwner": "0xc4d10b41cfc25cce0455269e203593a1abb6cd6e",
+    "currentStage": "Sold",
+    "isActive": true,
+    "manufacturer_id": "69bc5b9e61db6ee834d02516",
+    "manufacturingDate": "2026-03-22T20:47:48.000Z",
+    "name": "1",
+    "pendingTransferId": null,
+    "productId": "1",
+    "status": "SOLD",
+    "transferStatus": "none",
+    "updatedAt": "2026-04-06T20:06:12.259Z",
+    "distributor_id": "69bc5b9e61db6ee834d02518",
+    "retailer_id": "69bc5b9e61db6ee834d0251a"
+  },
+  {
+    "manufacturer": {
+      "walletAddress": "0x3f127f2ffdfe92d2c5bdb075eb0b77682f7b858e",
+      "name": "Farmson Pharmaceutical",
+      "email": "mfg@pharma.com"
+    },
+    "metadata": {
+      "certifications": [],
+      "materials": []
+    },
+    "_id": "69d412dba66c3aaa30bb6fdf",
+    "tokenId": 4,
+    "__v": 1,
+    "batchNumber": "2",
+    "checkpoints": [
+      {
+        "timestamp": "2026-04-06T20:09:00.000Z",
+        "stage": "Manufactured",
+        "handler": "0x3f127f2ffdfe92d2c5bdb075eb0b77682f7b858e",
+        "handlerName": "Farmson Pharmaceutical",
+        "handlerEmail": "mfg@pharma.com",
+        "notes": "Product manufactured and minted on blockchain",
+        "transactionHash": "0x0cddd897b330d1e0b057337f32c9207bab4892c74c18a3fc5e6a0dc4d62784ba"
+      },
+      {
+        "location": {
+          "address": "In Transit"
+        },
+        "timestamp": "2026-04-06T20:09:48.518Z",
+        "stage": "InDistribution",
+        "handler": "0xab12836a055813ca2c2bdc7e7f4e2a02b0f95d14",
+        "handlerName": "Amol Pharmaceuticals",
+        "notes": "Transferred to Distributor",
+        "transactionHash": "0xef04d79baee63dedca0f95b7dd46b5c4122a3ded17ba98b0fae400e3ca4a59d3"
+      }
+    ],
+    "createdAt": "2026-04-06T20:08:59.764Z",
+    "currentOwner": "0xab12836a055813ca2c2bdc7e7f4e2a02b0f95d14",
+    "currentStage": "InDistribution",
+    "isActive": true,
+    "manufacturer_id": "69bc5b9e61db6ee834d02516",
+    "manufacturingDate": "2026-04-06T20:09:00.000Z",
+    "name": "500",
+    "pendingTransferId": null,
+    "productId": "500",
+    "status": "IN_TRANSIT",
+    "transferStatus": "none",
+    "updatedAt": "2026-04-06T20:09:48.521Z",
+    "distributor_id": "69bc5b9e61db6ee834d02518"
+  }
+]

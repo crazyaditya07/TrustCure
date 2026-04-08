@@ -545,8 +545,8 @@ router.get('/stats/:walletAddress', async (req, res) => {
         ] = await Promise.all([
             Product.countDocuments({ currentOwner: walletAddress, isActive: true }),
             Product.countDocuments({ 'manufacturer.walletAddress': walletAddress }),
-            Event.countDocuments({ to: walletAddress, eventType: 'ProductTransferred' }),
-            Event.countDocuments({ from: walletAddress, eventType: 'ProductTransferred' })
+            Event.countDocuments({ to: walletAddress, eventType: { $in: ['ProductTransferred', 'TransferredToDistributor', 'TransferredToRetailer', 'ProductSold'] } }),
+            Event.countDocuments({ from: walletAddress, eventType: { $in: ['ProductTransferred', 'TransferredToDistributor', 'TransferredToRetailer', 'ProductSold'] } })
         ]);
 
         res.json({

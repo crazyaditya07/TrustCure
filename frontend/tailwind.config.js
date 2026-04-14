@@ -43,7 +43,7 @@ export default {
                     DEFAULT: "hsl(var(--card))",
                     foreground: "hsl(var(--card-foreground))",
                 },
-                tracex: {
+                trustcure: {
                     dark: '#0a0a0f',
                     darker: '#050508',
                     card: '#12121a',

@@ -9,10 +9,10 @@ try {
     process.exit(1);
 }
 
-const srcComponents = path.resolve('d:/TraceX1/app/src/components');
-const destComponents = path.resolve('d:/TraceX1/frontend/src/components');
-const srcPages = path.resolve('d:/TraceX1/app/src/pages');
-const destPagesNew = path.resolve('d:/TraceX1/frontend/src/pages_new');
+const srcComponents = path.resolve('d:/TrustCure1/app/src/components');
+const destComponents = path.resolve('d:/TrustCure1/frontend/src/components');
+const srcPages = path.resolve('d:/TrustCure1/app/src/pages');
+const destPagesNew = path.resolve('d:/TrustCure1/frontend/src/pages_new');
 
 function ensureDir(dir) {
     if (!fs.existsSync(dir)) {

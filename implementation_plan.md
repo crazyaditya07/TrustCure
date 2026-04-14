@@ -21,7 +21,7 @@ graph TB
     end
 
     subgraph "Blockchain (Sepolia)"
-        SC[TraceXSupplyChain Contract]
+        SC[TrustCureSupplyChain Contract]
     end
 
     subgraph "Storage"
@@ -190,7 +190,7 @@ for (const t of expiredTransfers) {
 
 ## 7. Event-Driven On-Chain Sync (Replace Frontend-Driven Finalization)
 
-Extend the existing [eventListener.js](file:///e:/TraceX1/backend/services/eventListener.js) polling service:
+Extend the existing [eventListener.js](file:///e:/TrustCure1/backend/services/eventListener.js) polling service:
 
 ```javascript
 // In poll() method, add LifecycleTransition handler:
@@ -270,9 +270,9 @@ Real-time updates via existing WebSocket (`socket.io`):
 | Action | File | Summary |
 |--------|------|---------|
 | **NEW** | `models/Transfer.js` | Transfer model with full state machine |
-| **MODIFY** | [models/Product.js](file:///e:/TraceX1/backend/models/Product.js) | Add `transferStatus` + `pendingTransferId` |
-| **MODIFY** | [routes/api.js](file:///e:/TraceX1/backend/routes/api.js) | Add 6 transfer endpoints |
-| **MODIFY** | [services/eventListener.js](file:///e:/TraceX1/backend/services/eventListener.js) | Add `LifecycleTransition` event handler |
+| **MODIFY** | [models/Product.js](file:///e:/TrustCure1/backend/models/Product.js) | Add `transferStatus` + `pendingTransferId` |
+| **MODIFY** | [routes/api.js](file:///e:/TrustCure1/backend/routes/api.js) | Add 6 transfer endpoints |
+| **MODIFY** | [services/eventListener.js](file:///e:/TrustCure1/backend/services/eventListener.js) | Add `LifecycleTransition` event handler |
 | **NEW** | `services/transferWorker.js` | Background expiry + retry worker |
 
 ### Frontend
@@ -282,7 +282,7 @@ Real-time updates via existing WebSocket (`socket.io`):
 | **NEW** | `components/TransferModal.jsx` | Sender-facing transfer initiation modal |
 | **NEW** | `components/IncomingTransfers.jsx` | Receiver-facing incoming transfers panel |
 | **NEW** | `hooks/useTransferCustody.js` | On-chain tx execution hook |
-| **MODIFY** | [pages/Dashboard.jsx](file:///e:/TraceX1/frontend/src/pages/Dashboard.jsx) | Integrate transfer UX into dashboard |
+| **MODIFY** | [pages/Dashboard.jsx](file:///e:/TrustCure1/frontend/src/pages/Dashboard.jsx) | Integrate transfer UX into dashboard |
 
 ---
 

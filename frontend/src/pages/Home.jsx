@@ -86,7 +86,7 @@ const Home = () => {
                             variants={itemVariants}
                             className="text-xl text-gray-400 mb-10 max-w-2xl mx-auto"
                         >
-                            TraceX leverages blockchain technology to provide transparent, tamper-proof tracking for your entire supply chain lifecycle.
+                            TrustCure leverages blockchain technology to provide transparent, tamper-proof tracking for your entire supply chain lifecycle.
                         </motion.p>
 
                         <motion.div

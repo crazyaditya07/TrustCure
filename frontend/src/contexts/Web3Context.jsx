@@ -6,8 +6,8 @@ const Web3Context = createContext(null);
 // Contract ABIs and addresses will be loaded from deployed contracts
 let contractsConfig = null;
 
-const SESSION_KEY = 'tracex_web3_session';
-const LOGOUT_FLAG_KEY = 'tracex_logout_flag';
+const SESSION_KEY = 'trustcure_web3_session';
+const LOGOUT_FLAG_KEY = 'trustcure_logout_flag';
 
 export function Web3Provider({ children }) {
     const [provider, setProvider] = useState(null);

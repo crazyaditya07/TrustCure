@@ -180,7 +180,7 @@ User Action → Connect Wallet → Try to Access Dashboard
 
 Add this to your browser console to see all registration checks:
 ```javascript
-localStorage.setItem('debug', 'tracex:*');
+localStorage.setItem('debug', 'trustcure:*');
 ```
 
 ### Check Current User in Database

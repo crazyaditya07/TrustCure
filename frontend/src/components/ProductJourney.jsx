@@ -23,18 +23,26 @@ const STAGES = [
  */
 const ProductJourney = ({ currentStage = 0, checkpoints = [], isLoading = false }) => {
   
-  // Helper to shorten Ethereum addresses for UI
-  const shortAddr = (addr) => addr ? `${addr.slice(0, 6)}...${addr.slice(-4)}` : 'Unknown';
+  // Map raw stage to a consumer-safe role label for tooltips
+  const stageRoleLabel = (stage) => {
+    const map = {
+      Manufacturer: 'Verified Manufacturer',
+      Distributor:  'Verified Distributor',
+      Retailer:     'Verified Retailer',
+      Consumer:     'Verified Consumer',
+    };
+    return map[stage] || stage;
+  };
 
-  // Helper to format UNIX timestamps from Solidity
+  // Format timestamp to date-only (no time, no timezone)
   const formatTime = (ts) => {
     if (!ts || ts === 0) return 'Pending';
     const date = new Date(Number(ts) * 1000);
-    return date.toLocaleString('en-US', { 
-      month: 'short', 
-      day: 'numeric', 
-      hour: '2-digit', 
-      minute: '2-digit' 
+    if (isNaN(date.getTime())) return 'Pending';
+    return date.toLocaleDateString('en-US', {
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric',
     });
   };
 
@@ -160,14 +168,14 @@ const ProductJourney = ({ currentStage = 0, checkpoints = [], isLoading = false 
                   <div className="absolute left-1/2 -translate-x-1/2 bottom-[110%] mb-3 w-52 p-4 rounded-xl bg-gray-900/95 backdrop-blur shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-white/10 opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none z-50 scale-95 group-hover:scale-100 origin-bottom">
                     <div className="space-y-2">
                       <div className="flex justify-between items-center">
-                        <span className="text-[9px] uppercase font-black text-gray-500 tracking-widest">Authorized Actor</span>
+                        <span className="text-[9px] uppercase font-black text-gray-500 tracking-widest">Verified Actor</span>
                         <div className="h-1.5 w-1.5 rounded-full bg-indigo-500" />
                       </div>
-                      <div className="text-[11px] font-mono text-indigo-300 font-medium">
-                        {cp ? shortAddr(cp.handler) : 'Genesis Node'}
+                      <div className="text-[11px] text-indigo-300 font-medium">
+                        {stageRoleLabel(stage.label)}
                       </div>
                       <div className="pt-2 mt-2 border-t border-white/5">
-                        <div className="text-[9px] uppercase font-black text-gray-500 tracking-widest">Entry Timestamp</div>
+                        <div className="text-[9px] uppercase font-black text-gray-500 tracking-widest">Entry Date</div>
                         <div className="text-[11px] text-white/90 font-medium">{cp ? formatTime(cp.timestamp) : 'Pending...'}</div>
                       </div>
                     </div>

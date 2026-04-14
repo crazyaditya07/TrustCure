@@ -1,7 +1,7 @@
-# TraceX - Logout Fix & Registration Page Implementation
+# TrustCure - Logout Fix & Registration Page Implementation
 
 ## Overview
-This document describes the changes made to fix the logout functionality and implement a user registration flow for the TraceX supply chain tracking application.
+This document describes the changes made to fix the logout functionality and implement a user registration flow for the TrustCure supply chain tracking application.
 
 ## Changes Made
 

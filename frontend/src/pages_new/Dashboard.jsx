@@ -170,7 +170,7 @@ const Dashboard = () => {
               <Activity className="w-5 h-5 text-gray-500" />
             </div>
             
-            <div className="bg-tracex-card/80 backdrop-blur-xl border border-white/5 rounded-2xl p-4">
+            <div className="bg-trustcure-card/80 backdrop-blur-xl border border-white/5 rounded-2xl p-4">
               <div className="space-y-4">
                 {mockActivities.map((activity, index) => {
                   const Icon = getActivityIcon(activity.type)
@@ -223,7 +223,7 @@ const Dashboard = () => {
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  className="flex flex-col items-center gap-2 p-4 bg-tracex-card/80 backdrop-blur-xl border border-white/5 rounded-xl hover:border-white/10 transition-all"
+                  className="flex flex-col items-center gap-2 p-4 bg-trustcure-card/80 backdrop-blur-xl border border-white/5 rounded-xl hover:border-white/10 transition-all"
                 >
                   <div className="w-10 h-10 rounded-lg bg-indigo-500/20 flex items-center justify-center">
                     <Package className="w-5 h-5 text-indigo-400" />
@@ -234,7 +234,7 @@ const Dashboard = () => {
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  className="flex flex-col items-center gap-2 p-4 bg-tracex-card/80 backdrop-blur-xl border border-white/5 rounded-xl hover:border-white/10 transition-all"
+                  className="flex flex-col items-center gap-2 p-4 bg-trustcure-card/80 backdrop-blur-xl border border-white/5 rounded-xl hover:border-white/10 transition-all"
                 >
                   <div className="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center">
                     <ArrowRightLeft className="w-5 h-5 text-purple-400" />
@@ -245,7 +245,7 @@ const Dashboard = () => {
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  className="flex flex-col items-center gap-2 p-4 bg-tracex-card/80 backdrop-blur-xl border border-white/5 rounded-xl hover:border-white/10 transition-all"
+                  className="flex flex-col items-center gap-2 p-4 bg-trustcure-card/80 backdrop-blur-xl border border-white/5 rounded-xl hover:border-white/10 transition-all"
                 >
                   <div className="w-10 h-10 rounded-lg bg-green-500/20 flex items-center justify-center">
                     <CheckCircle2 className="w-5 h-5 text-green-400" />
@@ -256,7 +256,7 @@ const Dashboard = () => {
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  className="flex flex-col items-center gap-2 p-4 bg-tracex-card/80 backdrop-blur-xl border border-white/5 rounded-xl hover:border-white/10 transition-all"
+                  className="flex flex-col items-center gap-2 p-4 bg-trustcure-card/80 backdrop-blur-xl border border-white/5 rounded-xl hover:border-white/10 transition-all"
                 >
                   <div className="w-10 h-10 rounded-lg bg-cyan-500/20 flex items-center justify-center">
                     <Users className="w-5 h-5 text-cyan-400" />

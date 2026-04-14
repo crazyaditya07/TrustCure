@@ -53,14 +53,14 @@ function Navbar() {
                 <Link to="/" className="navbar-brand">
                     <img
                         src={logo}
-                        alt="TraceX Logo"
+                        alt="TrustCure Logo"
                         style={{
                             height: '40px',
                             width: 'auto',
                             filter: 'drop-shadow(0 0 10px rgba(0, 255, 255, 0.3))'
                         }}
                     />
-                    <span className="navbar-brand-text">TraceX</span>
+                    <span className="navbar-brand-text">TrustCure</span>
                 </Link>
 
                 <div className="navbar-nav">

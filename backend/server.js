@@ -50,7 +50,7 @@ app.use(cors({
 app.use(express.json());
 
 // MongoDB Connection
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/tracex_db';
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/trustcure_db';
 
 mongoose.connect(MONGODB_URI)
     .then(() => {

@@ -59,7 +59,7 @@ async function main() {
     const artifactsDir = path.join(__dirname, "..", "artifacts", "contracts");
 
     const supplyChainArtifact = JSON.parse(
-        fs.readFileSync(path.join(artifactsDir, "TraceXNFT.sol", "SupplyChainNFT.json"))
+        fs.readFileSync(path.join(artifactsDir, "TrustCureNFT.sol", "SupplyChainNFT.json"))
     );
     const accessManagerArtifact = JSON.parse(
         fs.readFileSync(path.join(artifactsDir, "AccessManager.sol", "AccessManager.json"))

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * TraceX Registration Debug Tool
+ * TrustCure Registration Debug Tool
  * 
  * This script helps debug registration issues by:
  * 1. Checking if backend is running
@@ -62,7 +62,7 @@ async function checkUser(walletAddress) {
 
 async function main() {
     console.log('═══════════════════════════════════════════');
-    console.log('   TraceX Registration Debug Tool');
+    console.log('   TrustCure Registration Debug Tool');
     console.log('═══════════════════════════════════════════');
 
     const walletAddress = process.argv[2];

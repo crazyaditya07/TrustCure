@@ -32,7 +32,7 @@ const socialLinks = [
 
 const Footer = () => {
   return (
-    <footer className="relative border-t border-white/5 bg-tracex-darker/50 backdrop-blur-xl">
+    <footer className="relative border-t border-white/5 bg-trustcure-darker/50 backdrop-blur-xl">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10 lg:gap-8">
           {/* Brand */}
@@ -41,7 +41,7 @@ const Footer = () => {
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
                 <Blocks className="w-5 h-5 text-white" />
               </div>
-              <span className="text-xl font-bold text-white">TraceX</span>
+              <span className="text-xl font-bold text-white">TrustCure</span>
             </Link>
             <p className="text-gray-400 text-sm leading-relaxed max-w-sm mb-6">
               Blockchain-powered supply chain tracking. Ensuring transparency, 
@@ -119,7 +119,7 @@ const Footer = () => {
         {/* Bottom */}
         <div className="mt-12 pt-8 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-gray-500 text-sm">
-            &copy; {new Date().getFullYear()} TraceX. All rights reserved.
+            &copy; {new Date().getFullYear()} TrustCure. All rights reserved.
           </p>
           <div className="flex items-center gap-6">
             <span className="text-gray-500 text-sm">Powered by</span>

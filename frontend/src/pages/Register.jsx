@@ -100,7 +100,7 @@ function Register() {
                         Create Account
                     </h1>
                     <p style={{ color: 'var(--text-secondary)', fontSize: '1.125rem' }}>
-                        Join TraceX Supply Chain Network
+                        Join TrustCure Supply Chain Network
                     </p>
                 </div>
 

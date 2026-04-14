@@ -17,7 +17,7 @@ const mongoose = require('mongoose');
 const Product = require('./models/Product');
 const User = require('./models/User');
 
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/tracex_db';
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/trustcure_db';
 
 async function fixOwnership() {
     try {

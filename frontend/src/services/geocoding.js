@@ -25,7 +25,7 @@ export async function geocodeAddress(address) {
 
         const response = await fetch(`${NOMINATIM_BASE_URL}/search?${params}`, {
             headers: {
-                'User-Agent': 'TraceX Supply Chain App'
+                'User-Agent': 'TrustCure Supply Chain App'
             }
         });
 
@@ -71,7 +71,7 @@ export async function reverseGeocode(lat, lng) {
 
         const response = await fetch(`${NOMINATIM_BASE_URL}/reverse?${params}`, {
             headers: {
-                'User-Agent': 'TraceX Supply Chain App'
+                'User-Agent': 'TrustCure Supply Chain App'
             }
         });
 

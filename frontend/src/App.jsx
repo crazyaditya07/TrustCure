@@ -15,6 +15,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import ProductDetails from './pages/ProductDetails';
+import ConsumerView from './pages/ConsumerView';
 import ScanProduct from './pages/ScanProduct';
 import ManageUsers from './pages/ManageUsers';
 import CreateProduct from './pages/CreateProduct';
@@ -28,7 +29,7 @@ function ProtectedRoute({ children, allowedRoles = [] }) {
 
     if (loading) {
         return (
-            <div className="flex items-center justify-center h-full min-h-screen bg-tracex-darker">
+            <div className="flex items-center justify-center h-full min-h-screen bg-trustcure-darker">
                 <div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
             </div>
         );
@@ -116,11 +117,36 @@ const AnimatedPage = ({ children }) => (
     </motion.div>
 )
 
+/**
+ * ProductRouteGuard
+ *
+ * Decides whether /product/:productId renders the full internal ProductDetails
+ * (for privileged roles) or the consumer-facing ConsumerView.
+ *
+ * Detection uses ROLE-BASED logic (not auth/wallet presence):
+ *   - If the user has any privileged role → show ProductDetails
+ *   - Otherwise (CONSUMER or no role) → show ConsumerView
+ *
+ * This handles the case where consumers may also have wallets connected.
+ */
+const PRIVILEGED_ROLES = ['MANUFACTURER', 'DISTRIBUTOR', 'RETAILER', 'ADMIN'];
+
+function ProductRouteGuard() {
+    const { userRoles: walletRoles, isConnected } = useWeb3();
+    const { user } = useAuth();
+
+    // Resolve roles from wallet or auth — same pattern as ProductDetails.jsx
+    const userRoles = isConnected ? walletRoles : (user?.roles || ['CONSUMER']);
+    const isPrivileged = userRoles.some(r => PRIVILEGED_ROLES.includes(r));
+
+    return isPrivileged ? <ProductDetails /> : <ConsumerView />;
+}
+
 function AppContent() {
     const location = useLocation();
 
     return (
-        <div className="min-h-screen bg-tracex-darker relative overflow-x-hidden font-sans text-gray-100">
+        <div className="min-h-screen bg-trustcure-darker relative overflow-x-hidden font-sans text-gray-100">
             {/* Background Effects */}
             <div className="fixed inset-0 pointer-events-none z-0">
                 <div className="absolute w-96 h-96 bg-indigo-600/20 rounded-full blur-[100px] top-0 left-1/4 animate-pulse-glow" />
@@ -148,7 +174,16 @@ function AppContent() {
                             />
                             <Route
                                 path="/product/:productId"
-                                element={<AnimatedPage><ProductDetails /></AnimatedPage>}
+                                element={
+                                    <AnimatedPage>
+                                        <ProductRouteGuard />
+                                    </AnimatedPage>
+                                }
+                            />
+                            {/* Public consumer verification route */}
+                            <Route
+                                path="/verify/:productId"
+                                element={<AnimatedPage><ConsumerView /></AnimatedPage>}
                             />
                             <Route
                                 path="/scan"

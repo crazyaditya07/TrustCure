@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 require('dotenv').config({ path: '../.env' });
 
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/tracex_db';
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/trustcure_db';
 
 async function sync() {
     try {

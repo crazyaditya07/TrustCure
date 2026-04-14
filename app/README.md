@@ -1,6 +1,6 @@
-# TraceX Frontend
+# TrustCure Frontend
 
-A modern, production-ready React frontend for TraceX - a blockchain-based supply chain tracking system.
+A modern, production-ready React frontend for TrustCure - a blockchain-based supply chain tracking system.
 
 ## Features
 
@@ -46,7 +46,7 @@ npm run build
 ## Project Structure
 
 ```
-tracex-frontend/
+trustcure-frontend/
 ├── src/
 │   ├── components/       # Reusable components
 │   │   ├── Navbar.jsx

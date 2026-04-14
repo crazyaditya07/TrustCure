@@ -1,6 +1,6 @@
-# 🛡️ TraceX: Decentralized Supply Chain Integrity
+# 🛡️ TrustCure: Decentralized Supply Chain Integrity
 
-**TraceX** is a next-generation decentralized pharmaceutical supply chain tracking system. By leveraging blockchain technology and real-time data synchronization, TraceX ensures that medicines and medical products are tracked with absolute transparency from the factory floor to the patient's hands.
+**TrustCure** is a next-generation decentralized pharmaceutical supply chain tracking system. By leveraging blockchain technology and real-time data synchronization, TrustCure ensures that medicines and medical products are tracked with absolute transparency from the factory floor to the patient's hands.
 
 ---
 

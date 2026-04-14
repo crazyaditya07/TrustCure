@@ -101,7 +101,7 @@ const Verify = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
-          className="bg-tracex-card/80 backdrop-blur-xl border border-white/5 rounded-2xl p-6 mb-8"
+          className="bg-trustcure-card/80 backdrop-blur-xl border border-white/5 rounded-2xl p-6 mb-8"
         >
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="flex flex-col sm:flex-row gap-4">
@@ -227,7 +227,7 @@ const Verify = () => {
               </motion.div>
 
               {/* Product Details */}
-              <div className="bg-tracex-card/80 backdrop-blur-xl border border-white/5 rounded-2xl p-6">
+              <div className="bg-trustcure-card/80 backdrop-blur-xl border border-white/5 rounded-2xl p-6">
                 <div className="flex items-start gap-4 mb-6">
                   <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-indigo-500/20 to-purple-500/20 flex items-center justify-center">
                     <Package className="w-8 h-8 text-indigo-400" />
@@ -300,7 +300,7 @@ const Verify = () => {
               </div>
 
               {/* Supply Chain Journey */}
-              <div className="bg-tracex-card/80 backdrop-blur-xl border border-white/5 rounded-2xl p-6">
+              <div className="bg-trustcure-card/80 backdrop-blur-xl border border-white/5 rounded-2xl p-6">
                 <h3 className="text-xl font-semibold text-white mb-6">
                   Supply Chain Journey
                 </h3>

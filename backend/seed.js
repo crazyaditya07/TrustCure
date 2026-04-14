@@ -31,7 +31,7 @@ console.log(`🌐 Base URL for scanning: ${SCAN_URL_BASE}`);
 console.log(`📱 Ensure your phone and laptop are on the same WiFi!`);
 console.log(`======================================================\n`);
 
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/tracex_db';
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/trustcure_db';
 
 const categoryTypes = ['Pharmaceuticals'];
 const medicalProducts = [
@@ -54,22 +54,22 @@ async function seedProducts(count = 50) {
         const mockPassword = await bcrypt.hash('password123', 10);
         const manufacturer = await User.create({
             name: 'Farmson Pharmaceutical', email: 'mfg@pharma.com', password: mockPassword,
-            role: 'MANUFACTURER', roles: ['MANUFACTURER'], walletAddress: '0x1111111111111111111111111111111111111111',
+            role: 'MANUFACTURER', roles: ['MANUFACTURER'], walletAddress: '0x3f127F2FfdFE92D2C5BdB075eb0B77682F7B858E',
             company: 'Farmson', isVerified: true, isActive: true
         });
         const distributor = await User.create({
             name: 'Amol Pharmaceuticals', email: 'dist@pharma.com', password: mockPassword,
-            role: 'DISTRIBUTOR', roles: ['DISTRIBUTOR'], walletAddress: '0x2222222222222222222222222222222222222222',
+            role: 'DISTRIBUTOR', roles: ['DISTRIBUTOR'], walletAddress: '0xAb12836A055813ca2c2bDC7e7f4e2A02B0F95D14',
             company: 'Amol Logistics', isVerified: true, isActive: true
         });
         const retailer = await User.create({
             name: 'Aditya Pharmacy', email: 'retail@pharma.com', password: mockPassword,
-            role: 'RETAILER', roles: ['RETAILER'], walletAddress: '0x3333333333333333333333333333333333333333',
+            role: 'RETAILER', roles: ['RETAILER'], walletAddress: '0xc4d10b41CFc25CCe0455269E203593a1abB6cd6e',
             company: 'Aditya Retail', isVerified: true, isActive: true
         });
         const consumer = await User.create({
             name: 'Divy', email: 'consumer@pharma.com', password: mockPassword,
-            role: 'CONSUMER', roles: ['CONSUMER'], walletAddress: '0x4444444444444444444444444444444444444444',
+            role: 'CONSUMER', roles: ['CONSUMER'], walletAddress: '0x6c2332C89BEF1fEe56650392Dc8c133A605a180d',
             company: 'Individual', isVerified: true, isActive: true
         });
         console.log('✅ Created mock supply chain users (mfg, dist, retail, consumer) @pharma.com');

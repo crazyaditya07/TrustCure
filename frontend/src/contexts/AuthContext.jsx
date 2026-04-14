@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 
 const AuthContext = createContext(null);
 
-const SESSION_KEY = 'tracex_auth_session';
+const SESSION_KEY = 'trustcure_auth_session';
 
 export function AuthProvider({ children }) {
     const [user, setUser] = useState(null);

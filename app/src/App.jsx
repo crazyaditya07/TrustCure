@@ -45,7 +45,7 @@ function App() {
   const location = useLocation()
 
   return (
-    <div className="min-h-screen bg-tracex-darker relative overflow-x-hidden">
+    <div className="min-h-screen bg-trustcure-darker relative overflow-x-hidden">
       {/* Background Effects */}
       <div className="fixed inset-0 pointer-events-none">
         <div className="gradient-orb w-96 h-96 bg-indigo-600 top-0 left-1/4" />

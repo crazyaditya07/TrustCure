@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 require('dotenv').config({ path: '../.env' });
 const User = require('./models/User');
 
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/tracex_db';
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/trustcure_db';
 
 const targetWallets = {
     MANUFACTURER: '0x3f127F2FfdFE92D2C5BdB075eb0B77682F7B858E',

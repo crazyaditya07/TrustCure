@@ -189,7 +189,7 @@ const Home = () => {
                   >
                     <motion.div
                       whileHover={{ y: -8, scale: 1.02 }}
-                      className="bg-tracex-card/80 backdrop-blur-xl border border-white/5 rounded-2xl p-8 text-center hover:border-white/10 transition-all duration-300"
+                      className="bg-trustcure-card/80 backdrop-blur-xl border border-white/5 rounded-2xl p-8 text-center hover:border-white/10 transition-all duration-300"
                     >
                       <motion.div
                         initial={{ scale: 0 }}
@@ -244,7 +244,7 @@ const Home = () => {
             className="text-center mb-16"
           >
             <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">
-              Why Choose TraceX
+              Why Choose TrustCure
             </h2>
             <p className="text-gray-400 max-w-2xl mx-auto">
               Our platform provides everything you need to track, verify, and 
@@ -274,7 +274,7 @@ const Home = () => {
                   whileHover={{ y: -4 }}
                   className="group"
                 >
-                  <div className="h-full bg-tracex-card/80 backdrop-blur-xl border border-white/5 rounded-2xl p-6 hover:border-white/10 transition-all duration-300">
+                  <div className="h-full bg-trustcure-card/80 backdrop-blur-xl border border-white/5 rounded-2xl p-6 hover:border-white/10 transition-all duration-300">
                     <div className={`w-12 h-12 rounded-xl ${colorVariants[feature.color]} flex items-center justify-center mb-4`}>
                       <Icon className="w-6 h-6" />
                     </div>
@@ -313,7 +313,7 @@ const Home = () => {
                 Ready to Transform Your Supply Chain?
               </h2>
               <p className="text-gray-400 max-w-xl mx-auto mb-8">
-                Join hundreds of companies already using TraceX to ensure 
+                Join hundreds of companies already using TrustCure to ensure 
                 transparency and trust in their supply chains.
               </p>
               

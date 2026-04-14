@@ -195,7 +195,7 @@ const CreateProduct = () => {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 20 }}
               transition={{ duration: 0.3 }}
-              className="bg-tracex-card/80 backdrop-blur-xl border border-white/5 rounded-2xl p-6"
+              className="bg-trustcure-card/80 backdrop-blur-xl border border-white/5 rounded-2xl p-6"
             >
               <form onSubmit={handleProductSubmit} className="space-y-6">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
@@ -335,7 +335,7 @@ const CreateProduct = () => {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
               transition={{ duration: 0.3 }}
-              className="bg-tracex-card/80 backdrop-blur-xl border border-white/5 rounded-2xl p-6"
+              className="bg-trustcure-card/80 backdrop-blur-xl border border-white/5 rounded-2xl p-6"
             >
               <form onSubmit={handleTransferSubmit} className="space-y-6">
                 <div className="grid grid-cols-1 gap-6">

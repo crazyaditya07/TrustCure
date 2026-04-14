@@ -57,7 +57,7 @@ function Login() {
                         Welcome Back
                     </h1>
                     <p style={{ color: 'var(--text-secondary)', fontSize: '1.125rem' }}>
-                        Login to TraceX
+                        Login to TrustCure
                     </p>
                 </div>
 

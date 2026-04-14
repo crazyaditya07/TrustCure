@@ -5,6 +5,13 @@ const Product = require('../models/Product');
 const Event = require('../models/Event');
 const Transfer = require('../models/Transfer');
 const { ethers } = require('ethers');
+const {
+    maskWallet,
+    maskContract,
+    buildConsumerCheckpoints,
+    computeChainIntegrity,
+    NFT_CONTRACT_ADDRESS,
+} = require('../utils/maskData');
 
 // ============================================
 // Authentication & Users
@@ -212,6 +219,82 @@ router.get('/products', async (req, res) => {
 router.get('/products/:productId', async (req, res) => {
     try {
         console.log("BACKEND: FETCHING PRODUCT WITH ID/TOKEN:", req.params.productId);
+
+        // ============================================================
+        // CONSUMER VIEW: ?view=consumer — backend-enforced whitelist
+        // ============================================================
+        if (req.query.view === 'consumer') {
+            // Populate manufacturer, distributor, and retailer names safely
+            const product = await Product.findOne({
+                $or: [
+                    { productId: req.params.productId },
+                    { tokenId: parseInt(req.params.productId) || -1 }
+                ]
+            }).populate('manufacturer_id distributor_id retailer_id', 'name');
+
+            if (!product) {
+                return res.status(404).json({ error: 'Product not found' });
+            }
+
+            // Get consumer-visible checkpoints using existing role-based method
+            const visibleCheckpoints = product.getVisibleHistory(['CONSUMER'], null);
+
+            // Compute chain integrity server-side
+            const chainIntegrity = computeChainIntegrity(product, visibleCheckpoints);
+
+            // Resolve names safely
+            const mName = (product.manufacturer_id && product.manufacturer_id.name) ||
+                          (product.manufacturer && product.manufacturer.name) ||
+                          null;
+            const dName = (product.distributor_id && product.distributor_id.name) || null;
+            const rName = (product.retailer_id && product.retailer_id.name) || null;
+
+            // Build consumer-safe checkpoint list (wallet masking applied here)
+            // and attach `actorName` to each checkpoint based on rawStage
+            const baseSafeCheckpoints = buildConsumerCheckpoints(visibleCheckpoints, maskWallet);
+            const safeCheckpoints = baseSafeCheckpoints.map(cp => {
+                let actorName = null;
+                if (cp.rawStage === 'Manufactured' || cp.rawStage === 'Created') {
+                    actorName = mName;
+                } else if (cp.rawStage === 'InDistribution') {
+                    actorName = dName;
+                } else if (cp.rawStage === 'InRetail') {
+                    actorName = rName;
+                }
+                return {
+                    ...cp,
+                    actorName
+                };
+            });
+
+            // Contract address from maskData (env or deployedContracts.json fallback)
+            const contractAddress = NFT_CONTRACT_ADDRESS;
+
+            // === WHITELIST-ONLY RESPONSE — nothing else is sent ===
+            return res.json({
+                name:             product.name,
+                batchNumber:      product.batchNumber,
+                tokenId:          product.tokenId,
+                currentStage:     product.currentStage,
+                manufacturingDate: product.manufacturingDate || null,
+                expiryDate:       (product.metadata && product.metadata.expiryDate) || null,
+                manufacturerName: mName, // Retained for backwards compatibility if needed
+                
+                // Privacy-safe actor objects
+                manufacturer:     mName ? { name: mName } : null,
+                distributor:      dName ? { name: dName } : null,
+                retailer:         rName ? { name: rName } : null,
+
+                checkpoints:      safeCheckpoints,
+                contractAddress:  contractAddress ? maskContract(contractAddress) : null,
+                contractAddressFull: contractAddress || null,
+                chainIntegrity,
+            });
+        }
+
+        // ============================================================
+        // INTERNAL VIEW: no view param — existing behaviour unchanged
+        // ============================================================
         const product = await Product.findOne({
             $or: [
                 { productId: req.params.productId },

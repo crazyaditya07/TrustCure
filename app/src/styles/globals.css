@@ -37,7 +37,7 @@
   }
   
   body {
-    @apply bg-tracex-darker text-foreground font-sans antialiased;
+    @apply bg-trustcure-darker text-foreground font-sans antialiased;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
   }
 }
@@ -56,7 +56,7 @@
   }
   
   .glass-card {
-    @apply bg-tracex-card/80 backdrop-blur-xl border border-white/5 rounded-xl;
+    @apply bg-trustcure-card/80 backdrop-blur-xl border border-white/5 rounded-xl;
   }
   
   .glow-indigo {

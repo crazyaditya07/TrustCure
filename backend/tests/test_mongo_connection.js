@@ -2,8 +2,8 @@ const mongoose = require('mongoose');
 const User = require('../models/User');
 require('dotenv').config(); // Should load from .env
 
-const MONGODB_URI = 'mongodb://localhost:27017/tracex_db';
-// const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/tracex_db';
+const MONGODB_URI = 'mongodb://localhost:27017/trustcure_db';
+// const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/trustcure_db';
 
 console.log('Testing MongoDB Connection to:', MONGODB_URI);
 

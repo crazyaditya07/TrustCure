@@ -1,212 +1,264 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { Html5Qrcode } from 'html5-qrcode';
 
+// Static ID — never changes, so html5-qrcode can always find the element
+const SCANNER_ELEMENT_ID = 'html5-qrcode-element';
+
+// Html5Qrcode internal scan states (numeric)
+const STATE = { NOT_STARTED: 0, SCANNING: 1, PAUSED: 2 };
+
 function QRScanner({ onScan, onError }) {
-    const [isScanning, setIsScanning] = useState(false);
+    const [phase, setPhase] = useState('idle'); // 'idle' | 'starting' | 'scanning' | 'stopping'
     const [hasPermission, setHasPermission] = useState(null);
     const [error, setError] = useState(null);
-    const scannerRef = useRef(null);
-    const html5QrCodeRef = useRef(null);
-    const isMountedRef = useRef(true);
-    const elementIdRef = useRef(null);
 
-    useEffect(() => {
-        return () => {
-            isMountedRef.current = false;
-            stopScanner();
-        };
+    const instanceRef  = useRef(null);  // Html5Qrcode instance
+    const isMountedRef = useRef(true);
+    const isStoppingRef = useRef(false);
+
+    // ── Force-kill all camera tracks (hardware fallback) ─────────────────────
+    const killTracks = useCallback(() => {
+        // Kill tracks on any video element the library may have created
+        const el = document.getElementById(SCANNER_ELEMENT_ID);
+        if (el) {
+            el.querySelectorAll('video').forEach((v) => {
+                try {
+                    v.srcObject?.getTracks?.().forEach((t) => t.stop());
+                    v.srcObject = null;
+                } catch (_) {}
+            });
+        }
     }, []);
 
-    const startScanner = async () => {
-        if (html5QrCodeRef.current) {
-            await stopScanner();
+    // ── Stop scanner ──────────────────────────────────────────────────────────
+    const stopScanner = useCallback(async () => {
+        if (isStoppingRef.current) return;
+        isStoppingRef.current = true;
+
+        const inst = instanceRef.current;
+        instanceRef.current = null; // Clear immediately — prevents re-entrant calls
+
+        if (inst) {
+            try {
+                const state = inst.getState?.();
+                if (state === STATE.SCANNING || state === STATE.PAUSED) {
+                    await inst.stop().catch(() => {});
+                }
+            } catch (_) {}
+            // clear() removes the library's injected DOM from the element
+            try { inst.clear(); } catch (_) {}
         }
 
+        // Guarantee camera LED goes off
+        killTracks();
+
+        if (isMountedRef.current) {
+            setPhase('idle');
+        }
+
+        isStoppingRef.current = false;
+    }, [killTracks]);
+
+    // ── Unmount cleanup ───────────────────────────────────────────────────────
+    useEffect(() => {
+        isMountedRef.current = true;
+        return () => {
+            isMountedRef.current = false;
+            stopScanner(); // fire-and-forget on unmount
+        };
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+    // ── Start scanner ─────────────────────────────────────────────────────────
+    const startScanner = useCallback(async () => {
+        if (phase === 'starting' || phase === 'scanning') return;
+        if (instanceRef.current) await stopScanner();
+
+        setError(null);
+        setPhase('starting');
+
+        const inst = new Html5Qrcode(SCANNER_ELEMENT_ID);
+        // Store ref IMMEDIATELY so cleanup can always find it even during start()
+        instanceRef.current = inst;
+
         try {
-            setError(null);
-
-            // Use a unique element ID to avoid conflicts
-            const elementId = 'qr-reader-' + Date.now();
-            const element = document.getElementById('qr-reader');
-            if (element) {
-                element.id = elementId;
-                elementIdRef.current = elementId;
-            }
-
-            const html5QrCode = new Html5Qrcode(elementId);
-            html5QrCodeRef.current = html5QrCode;
-
-            await html5QrCode.start(
+            await inst.start(
                 { facingMode: 'environment' },
                 {
                     fps: 10,
-                    qrbox: { width: 250, height: 250 },
+                    qrbox: { width: 240, height: 240 },
                     aspectRatio: 1.0,
                     videoConstraints: {
-                        width: { min: 480, ideal: 720, max: 1280 },
+                        facingMode: 'environment',
+                        width:  { min: 480, ideal: 720, max: 1280 },
                         height: { min: 480, ideal: 720, max: 1280 },
-                        facingMode: 'environment'
-                    }
+                    },
                 },
                 async (decodedText) => {
-                    console.log('QR Code scanned:', decodedText);
+                    console.log('QR scanned:', decodedText);
                     await stopScanner();
                     onScan?.(decodedText);
                 },
-                (errorMessage) => {
-                    // Scan failed, ignore continuous failures
-                }
+                () => { /* per-frame decode failures — intentionally silent */ },
             );
 
-            if (isMountedRef.current) {
-                setIsScanning(true);
-                setHasPermission(true);
+            // If the component unmounted while start() was awaiting, stop now
+            if (!isMountedRef.current) {
+                stopScanner();
+                return;
             }
-        } catch (err) {
-            const errString = err.toString ? err.toString() : String(err);
-            const isPermissionError = err.name === 'NotAllowedError' || errString.includes('Permission denied') || errString.includes('NotAllowedError');
 
-            if (isPermissionError) {
-                // User explicitly denied permission, just update state and don't throw to parent as an "app error"
+            setPhase('scanning');
+            setHasPermission(true);
+        } catch (err) {
+            // Start failed — clear ref and release any partial camera grab
+            instanceRef.current = null;
+            killTracks();
+
+            const msg = err?.toString?.() ?? String(err);
+            const denied =
+                err?.name === 'NotAllowedError' ||
+                msg.includes('Permission denied') ||
+                msg.includes('NotAllowedError');
+
+            if (denied) {
                 setHasPermission(false);
             } else {
-                console.error('Failed to start scanner:', err);
-                setError(err.message || 'Failed to access camera');
+                console.error('Scanner start failed:', err);
+                setError(err?.message || 'Failed to access camera');
                 setHasPermission(false);
                 onError?.(err);
             }
+
+            if (isMountedRef.current) setPhase('idle');
         }
-    };
+    }, [phase, stopScanner, killTracks, onScan, onError]);
 
-    const stopScanner = async () => {
-        const html5QrCode = html5QrCodeRef.current;
-        const elementId = elementIdRef.current;
-
-        if (html5QrCode) {
-            html5QrCodeRef.current = null;
-            try {
-                // Ensure camera hardware stops regardless of component mount status
-                try {
-                    await html5QrCode.stop();
-                } catch (stopErr) {
-                    if (stopErr) {
-                        console.log('Scanner stop warning (ignored):', stopErr.message || stopErr);
-                    }
-                }
-
-                if (elementId) {
-                    const element = document.getElementById(elementId);
-                    if (element && element.parentNode) {
-                        try {
-                            // html5QrCode.clear() can throw if not fully initialized, safe to ignore
-                            html5QrCode.clear();
-                        } catch (clearErr) {
-                            // Ignore clear error silently
-                        }
-                    }
-                    // Restore original ID
-                    if (element) {
-                        element.id = 'qr-reader';
-                    }
-                    elementIdRef.current = null;
-                }
-            } catch (err) {
-                // Ignore cleanup errors silently
-            }
-        }
-        if (isMountedRef.current) {
-            setIsScanning(false);
-        }
-    };
-
-    const toggleScanner = () => {
-        if (isScanning) {
+    // ── Toggle ────────────────────────────────────────────────────────────────
+    const toggle = () => {
+        if (phase === 'scanning' || phase === 'starting') {
             stopScanner();
         } else {
             startScanner();
         }
     };
 
+    const isActive   = phase === 'scanning' || phase === 'starting';
+    const isLoading  = phase === 'starting';
+
+    // ── Render ────────────────────────────────────────────────────────────────
     return (
         <div className="qr-scanner-container">
-            <div className="qr-scanner-frame">
+            <div style={{ position: 'relative', width: '100%' }}>
+
+                {/*
+                 * ⚠️ IMPORTANT: This div is 100% owned by html5-qrcode.
+                 * React MUST NOT render any children here — the library
+                 * directly injects/removes DOM nodes inside it.
+                 * Placeholder states go in the sibling overlay below.
+                 */}
                 <div
-                    id="qr-reader"
-                    ref={scannerRef}
+                    id={SCANNER_ELEMENT_ID}
                     style={{
                         width: '100%',
                         minHeight: '300px',
-                        background: 'var(--bg-tertiary)',
+                        borderRadius: '12px',
+                        overflow: 'hidden',
+                        background: '#0a0a12',
+                    }}
+                />
+
+                {/* Overlay — React's zone. Shown only when library is NOT active. */}
+                {phase !== 'scanning' && (
+                    <div style={{
+                        position: 'absolute',
+                        inset: 0,
                         display: 'flex',
+                        flexDirection: 'column',
                         alignItems: 'center',
                         justifyContent: 'center',
-                    }}
-                >
-                    {!isScanning && (
-                        <div style={{ textAlign: 'center', padding: '32px' }}>
-                            <div style={{ fontSize: '4rem', marginBottom: '16px' }}>📷</div>
-                            <p style={{ color: 'var(--text-secondary)', marginBottom: '16px' }}>
-                                Click the button below to start scanning
-                            </p>
-                        </div>
-                    )}
-                </div>
-
-                {isScanning && (
-                    <>
-                        <div className="qr-scanner-corners"></div>
-                        <div className="qr-scan-line"></div>
-                    </>
+                        borderRadius: '12px',
+                        background: 'rgba(10,10,18,0.97)',
+                        pointerEvents: 'none',
+                    }}>
+                        {isLoading ? (
+                            <>
+                                <div style={{
+                                    width: 36, height: 36,
+                                    border: '3px solid rgba(99,102,241,0.25)',
+                                    borderTopColor: '#6366f1',
+                                    borderRadius: '50%',
+                                    animation: 'qr-spin 0.75s linear infinite',
+                                    marginBottom: 12,
+                                }} />
+                                <p style={{ color: '#94a3b8', fontSize: '0.8rem' }}>Opening camera…</p>
+                            </>
+                        ) : (
+                            <>
+                                <div style={{ fontSize: '3rem', marginBottom: 10 }}>📷</div>
+                                <p style={{ color: '#64748b', fontSize: '0.8rem', textAlign: 'center', maxWidth: 200 }}>
+                                    Press <strong style={{ color: '#94a3b8' }}>Start Scanner</strong> to activate your camera
+                                </p>
+                            </>
+                        )}
+                    </div>
                 )}
             </div>
 
+            {/* Error message */}
             {error && (
                 <div style={{
-                    marginTop: '16px',
-                    padding: '12px 16px',
-                    background: 'var(--error-light)',
-                    color: 'var(--error)',
-                    borderRadius: '8px',
-                    fontSize: 'var(--font-size-sm)'
+                    marginTop: 12, padding: '10px 14px',
+                    background: 'rgba(239,68,68,0.08)',
+                    border: '1px solid rgba(239,68,68,0.2)',
+                    color: '#f87171', borderRadius: 10, fontSize: '0.85rem',
                 }}>
                     <strong>Error:</strong> {error}
                 </div>
             )}
 
-            {hasPermission === false && (
+            {/* Permission denied */}
+            {hasPermission === false && !error && (
                 <div style={{
-                    marginTop: '16px',
-                    padding: '16px',
-                    background: 'var(--glass-bg)',
-                    borderRadius: '8px',
-                    textAlign: 'center'
+                    marginTop: 12, padding: 14,
+                    background: 'rgba(255,255,255,0.03)',
+                    border: '1px solid rgba(255,255,255,0.07)',
+                    borderRadius: 10, textAlign: 'center',
                 }}>
-                    <p style={{ color: 'var(--text-secondary)', marginBottom: '8px' }}>
-                        Camera permission is required to scan QR codes.
+                    <p style={{ color: '#94a3b8', fontSize: '0.85rem', marginBottom: 4 }}>
+                        Camera permission was denied.
                     </p>
-                    <p style={{ color: 'var(--text-tertiary)', fontSize: 'var(--font-size-sm)' }}>
-                        Please allow camera access in your browser settings.
+                    <p style={{ color: '#475569', fontSize: '0.75rem' }}>
+                        Allow camera access in your browser and try again.
                     </p>
                 </div>
             )}
 
-            <div style={{ marginTop: '24px', textAlign: 'center' }}>
+            {/* Toggle button */}
+            <div style={{ marginTop: 18, textAlign: 'center' }}>
                 <button
-                    className={`btn ${isScanning ? 'btn-danger' : 'btn-primary'} btn-lg`}
-                    onClick={toggleScanner}
+                    className={`btn ${isActive ? 'btn-danger' : 'btn-primary'}`}
+                    onClick={toggle}
+                    disabled={isLoading}
+                    style={{ minWidth: 160 }}
                 >
-                    {isScanning ? '⏹ Stop Scanning' : '📷 Start Scanner'}
+                    {phase === 'scanning'
+                        ? '⏹ Stop Scanning'
+                        : phase === 'starting'
+                            ? 'Opening camera…'
+                            : '📷 Start Scanner'}
                 </button>
             </div>
 
-            <div style={{
-                marginTop: '24px',
-                textAlign: 'center',
-                color: 'var(--text-tertiary)',
-                fontSize: 'var(--font-size-sm)'
-            }}>
-                <p>Position the QR code within the frame to scan</p>
-            </div>
+            <p style={{ marginTop: 14, textAlign: 'center', color: '#334155', fontSize: '0.75rem' }}>
+                Position the QR code within the frame to scan
+            </p>
+
+            <style>{`
+                @keyframes qr-spin {
+                    from { transform: rotate(0deg); }
+                    to   { transform: rotate(360deg); }
+                }
+            `}</style>
         </div>
     );
 }

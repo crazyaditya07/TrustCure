@@ -210,7 +210,7 @@ const Dashboard = () => {
     }
 
     return (
-        <div className="min-h-screen pt-4 pb-12">
+        <div className="min-h-screen pt-6 pb-16">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 {/* Header */}
                 <motion.div
@@ -221,19 +221,20 @@ const Dashboard = () => {
                 >
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                         <div>
-                            <h1 className="text-3xl lg:text-4xl font-bold text-white mb-2">
+                            <h1 className="text-3xl lg:text-4xl font-bold text-white mb-1 tracking-tight">
                                 Dashboard
                             </h1>
-                            <p className="text-gray-400">
-                                Welcome back, {user?.name || user?.email || 'User'}!
+                            <p className="text-gray-500 text-sm">
+                                Welcome back, <span className="text-gray-400 font-medium">{user?.name || user?.email || 'User'}</span>
+                                {account && <span className="ml-2 text-gray-600 font-mono text-xs">({truncateWallet(account)})</span>}
                             </p>
                         </div>
 
                         {/* Role Badge */}
-                        <div className="flex items-center gap-3">
-                            {(user?.roles || [user?.role]).map((role, idx) => (
-                                <div key={idx} className={`px-4 py-2 rounded-xl bg-indigo-500/20 border border-indigo-500/30`}>
-                                    <span className={`text-sm font-medium text-indigo-400`}>
+                        <div className="flex items-center gap-2">
+                            {(user?.roles || [user?.role]).filter(Boolean).map((role, idx) => (
+                                <div key={idx} className="px-3 py-1.5 rounded-lg bg-indigo-500/10 border border-indigo-500/20">
+                                    <span className="text-xs font-semibold text-indigo-400 uppercase tracking-wider">
                                         {role}
                                     </span>
                                 </div>
@@ -278,25 +279,26 @@ const Dashboard = () => {
                     />
                 </div>
 
-                {/* Products Grid */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                {/* Products + Incoming Transfers */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    {/* Products Panel - spans 2 columns */}
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.5, delay: 0.4 }}
-                        className="lg:col-span-3"
+                        className="lg:col-span-2"
                     >
-                        <div className="flex items-center justify-between mb-6">
-                            <h2 className="text-xl font-semibold text-white">Your Products</h2>
+                        <div className="flex items-center justify-between mb-5">
+                            <h2 className="text-base font-semibold text-white tracking-tight">Your Products</h2>
                             {products.length > 0 && (
-                                <Link to="/scan" className="text-indigo-400 hover:text-indigo-300 text-sm font-medium flex items-center gap-1">
-                                    Scan Product <ChevronRight className="w-4 h-4" />
+                                <Link to="/scan" className="text-indigo-400 hover:text-indigo-300 text-xs font-medium flex items-center gap-1 transition-colors">
+                                    Scan Product <ChevronRight className="w-3.5 h-3.5" />
                                 </Link>
                             )}
                         </div>
 
                         {products.length > 0 ? (
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 {products.map((product, index) => (
                                     <ProductCard 
                                         key={product._id || index} 
@@ -308,20 +310,39 @@ const Dashboard = () => {
                                 ))}
                             </div>
                         ) : (
-                            <div className="text-center py-12 bg-white/5 rounded-2xl border border-white/10">
-                                <p className="text-gray-400 mb-4">No products found.</p>
-                                <div className="flex justify-center gap-4">
+                            <div className="text-center py-16 bg-white/[0.03] rounded-2xl border border-white/8">
+                                <div className="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center mx-auto mb-4">
+                                    <Package className="w-6 h-6 text-gray-600" />
+                                </div>
+                                <p className="text-gray-500 text-sm mb-5">No products found in your inventory.</p>
+                                <div className="flex justify-center gap-3">
                                     {(user?.role === 'MANUFACTURER' || user?.role === 'ADMIN') && (
-                                        <Link to="/create-product" className="px-4 py-2 bg-indigo-500 rounded-lg text-white font-medium hover:bg-indigo-600 transition-colors">
+                                        <Link to="/create-product" className="px-4 py-2 bg-indigo-500/20 border border-indigo-500/30 rounded-xl text-indigo-400 text-sm font-medium hover:bg-indigo-500/30 transition-all">
                                             Create Product
                                         </Link>
                                     )}
-                                    <Link to="/scan" className="px-4 py-2 bg-white/10 rounded-lg text-white font-medium hover:bg-white/20 transition-colors">
+                                    <Link to="/scan" className="px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-gray-300 text-sm font-medium hover:bg-white/10 transition-all">
                                         Scan Product
                                     </Link>
                                 </div>
                             </div>
                         )}
+                    </motion.div>
+
+                    {/* Incoming Transfers Panel - right column */}
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.5, delay: 0.5 }}
+                        className="lg:col-span-1"
+                    >
+                        <div className="flex items-center justify-between mb-5">
+                            <h2 className="text-base font-semibold text-white tracking-tight">Incoming Transfers</h2>
+                            <div className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse" />
+                        </div>
+                        <div className="rounded-2xl bg-white/[0.03] border border-white/8 overflow-hidden">
+                            <IncomingTransfers />
+                        </div>
                     </motion.div>
                 </div>
 

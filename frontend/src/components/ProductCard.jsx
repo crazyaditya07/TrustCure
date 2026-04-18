@@ -38,7 +38,7 @@ const ProductCard = ({ product, index = 0, onTransfer, currentUserWallet }) => {
     >
       <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/10 to-purple-500/10 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
-      <div className="relative bg-trustcure-card/80 backdrop-blur-xl border border-white/5 rounded-2xl p-5 hover:border-white/10 transition-all duration-300">
+      <div className="relative bg-trustcure-card/80 backdrop-blur-xl border border-white/5 rounded-2xl p-6 hover:border-indigo-500/20 hover:bg-white/[0.05] transition-all duration-300">
         {/* Header */}
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-center gap-3">
@@ -85,7 +85,7 @@ const ProductCard = ({ product, index = 0, onTransfer, currentUserWallet }) => {
         </p>
 
         {/* Details */}
-        <div className="space-y-2 mb-4">
+        <div className="space-y-3 mb-5">
           <div className="flex items-center gap-2 text-sm">
             <User className="w-4 h-4 text-gray-500" />
             <span className="text-gray-400">Manufacturer:</span>

@@ -61,13 +61,24 @@ const Navbar = () => {
           {/* Logo */}
           <Link to="/" className="flex items-center gap-3 group">
             <motion.div
-              whileHover={{ rotate: 180 }}
-              transition={{ duration: 0.5 }}
-              className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center"
+              whileHover={{ scale: 1.05 }}
+              transition={{ duration: 0.3 }}
+              className="flex items-center justify-center p-0.5 rounded-2xl bg-gradient-to-br from-[#0a0a0f] to-[#12121a] shadow-[0_0_15px_rgba(45,212,191,0.2)]"
             >
-              <Blocks className="w-5 h-5 text-white" />
+              <img 
+                src="/logo.png" 
+                alt="TrustCure Logo" 
+                className="w-10 h-10 object-contain rounded-xl" 
+                onError={(e) => {
+                  e.target.style.display = 'none';
+                  e.target.nextSibling.style.display = 'block';
+                }}
+              />
+              <div style={{ display: 'none' }}>
+                <Blocks className="w-5 h-5 text-teal-400 m-2.5" />
+              </div>
             </motion.div>
-            <span className="text-xl font-bold text-white group-hover:text-gradient transition-all">
+            <span className="text-xl font-bold text-white group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-teal-400 group-hover:to-cyan-500 transition-all">
               TrustCure
             </span>
           </Link>

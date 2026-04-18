@@ -110,14 +110,14 @@ const ConsumerTimeline = ({ checkpoints = [], network = 'sepolia', manufacturerN
 
                             {/* Content Card */}
                             <div
-                                className="flex-1 rounded-xl p-4 border"
+                                className="flex-1 rounded-xl p-5 border"
                                 style={{ background: 'rgba(255,255,255,0.03)', borderColor: 'rgba(255,255,255,0.08)' }}
                             >
-                                {/* Header row */}
+                                {/* Header row — no repeated VERIFIED badge */}
                                 <div className="flex items-start justify-between gap-3 mb-3">
                                     <div>
                                         {/* Stage title — consumer-safe label from backend */}
-                                        <h4 className="text-white font-semibold text-sm leading-tight mb-1">
+                                        <h4 className="text-white font-semibold text-sm leading-snug mb-1">
                                             {cp.stage}
                                         </h4>
                                         {/* Actor subtitle — role-based, NO wallet address */}
@@ -127,19 +127,6 @@ const ConsumerTimeline = ({ checkpoints = [], network = 'sepolia', manufacturerN
                                             </p>
                                         )}
                                     </div>
-
-                                    {/* Verified badge */}
-                                    <span
-                                        className="flex-shrink-0 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full border"
-                                        style={{
-                                            background: 'rgba(16,185,129,0.1)',
-                                            borderColor: 'rgba(16,185,129,0.3)',
-                                            color: '#34d399',
-                                        }}
-                                    >
-                                        <CheckCircle2 className="w-3 h-3" />
-                                        Verified
-                                    </span>
                                 </div>
 
                                 {/* Meta row */}

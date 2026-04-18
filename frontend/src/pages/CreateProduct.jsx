@@ -211,39 +211,99 @@ function CreateProduct() {
     };
 
     return (
-        <div style={{ maxWidth: '600px', margin: '0 auto' }}>
-            <div className="page-header">
-                <h1 className="page-title">Create Product</h1>
-                <p className="page-subtitle">
-                    {isConnected && contracts.supplyChainNFT
-                        ? '🔗 Connected to blockchain - Product will be minted as NFT'
-                        : '📝 Database mode - Product will be saved without blockchain'
-                    }
-                </p>
+        <div className="max-w-2xl mx-auto pt-6 pb-16 px-4">
+            {/* Page Header */}
+            <div className="mb-8">
+                <h1 className="text-3xl font-bold text-white mb-2 tracking-tight">Create Product</h1>
+                {/* Blockchain status badge */}
+                {isConnected && contracts.supplyChainNFT ? (
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 text-xs font-semibold">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                        Connected to Blockchain — NFT Minting Active
+                    </span>
+                ) : (
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/25 text-amber-400 text-xs font-semibold">
+                        <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                        Database Mode — No Blockchain
+                    </span>
+                )}
             </div>
 
-            <form onSubmit={handleSubmit} className="card">
+            <form onSubmit={handleSubmit} className="bg-white/[0.04] border border-white/8 rounded-2xl p-8 space-y-6 backdrop-blur-sm">
+                {/* Row 1: Product ID + Generate */}
                 <div className="form-group">
                     <label className="form-label">Product ID *</label>
-                    <div style={{ display: 'flex', gap: '8px' }}>
-                        <input type="text" name="productId" className="form-input" value={formData.productId} onChange={handleChange} required style={{ flex: 1 }} />
-                        <button type="button" className="btn btn-secondary" onClick={generateProductId}>Generate</button>
+                    <div className="flex gap-3">
+                        <input
+                            type="text"
+                            name="productId"
+                            className="form-input flex-1"
+                            value={formData.productId}
+                            onChange={handleChange}
+                            required
+                            placeholder="e.g., PROD-ABC123"
+                        />
+                        <button
+                            type="button"
+                            onClick={generateProductId}
+                            className="px-4 py-2.5 rounded-xl bg-white/8 border border-white/10 text-gray-300 text-sm font-medium hover:bg-white/12 hover:border-white/20 transition-all duration-200 whitespace-nowrap"
+                        >
+                            Generate
+                        </button>
                     </div>
                 </div>
-                <div className="form-group">
-                    <label className="form-label">Name</label>
-                    <input type="text" name="name" className="form-input" value={formData.name} onChange={handleChange} placeholder="e.g., Organic Coffee Beans" />
+
+                {/* Row 2: Name + Batch */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                    <div className="form-group !mb-0">
+                        <label className="form-label">Product Name</label>
+                        <input
+                            type="text"
+                            name="name"
+                            className="form-input"
+                            value={formData.name}
+                            onChange={handleChange}
+                            placeholder="e.g., Organic Coffee Beans"
+                        />
+                    </div>
+                    <div className="form-group !mb-0">
+                        <label className="form-label">Batch Number *</label>
+                        <input
+                            type="text"
+                            name="batchNumber"
+                            className="form-input"
+                            value={formData.batchNumber}
+                            onChange={handleChange}
+                            required
+                            placeholder="e.g., BATCH-2026-001"
+                        />
+                    </div>
                 </div>
-                <div className="form-group">
-                    <label className="form-label">Batch Number *</label>
-                    <input type="text" name="batchNumber" className="form-input" value={formData.batchNumber} onChange={handleChange} required placeholder="e.g., BATCH-2026-001" />
-                </div>
-                <div className="form-group">
+
+                {/* Row 3: Notes */}
+                <div className="form-group !mb-0">
                     <label className="form-label">Notes</label>
-                    <textarea name="notes" className="form-input" value={formData.notes} onChange={handleChange} rows={3} placeholder="Additional manufacturing notes..." />
+                    <textarea
+                        name="notes"
+                        className="form-input"
+                        value={formData.notes}
+                        onChange={handleChange}
+                        rows={3}
+                        placeholder="Additional manufacturing notes..."
+                    />
                 </div>
-                <button type="submit" className="btn btn-primary btn-lg w-full" disabled={loading}>
-                    {loading ? 'Creating...' : '🏭 Create Product'}
+
+                <button
+                    type="submit"
+                    className="w-full btn btn-primary py-2.5 text-sm mt-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled={loading}
+                >
+                    {loading ? (
+                        <span className="flex items-center justify-center gap-2">
+                            <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                            Creating...
+                        </span>
+                    ) : '🏭 Create Product'}
                 </button>
             </form>
         </div>

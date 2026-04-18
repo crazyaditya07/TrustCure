@@ -370,4 +370,10 @@
 
 .animate-gradient-x {
   animation: gradient-x 3s ease infinite;
+}
+
+@keyframes scanLine {
+  0%   { top: 10%; opacity: 0.8; }
+  50%  { top: 88%; opacity: 1; }
+  100% { top: 10%; opacity: 0.8; }
 }

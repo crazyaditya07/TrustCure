@@ -8,7 +8,8 @@ import {
   CheckCircle2,
   Clock,
   Truck,
-  ArrowRightLeft
+  ArrowRightLeft,
+  ShoppingBag
 } from 'lucide-react'
 
 const statusConfig = {
@@ -98,9 +99,11 @@ const ProductCard = ({ product, index = 0, onTransfer, currentUserWallet }) => {
             <span className="text-gray-400">Current Owner:</span>
             <span
               className="text-white truncate max-w-[150px]"
-              title={product.currentOwnerWallet || ''}
+              title={product.status === 'sold' ? 'Sold to Consumer' : (product.currentOwnerWallet || '')}
             >
-              {product.currentOwner || truncateWallet(product.currentOwnerWallet) || 'N/A'}
+              {product.status === 'sold' 
+                ? 'End Consumer' 
+                : (product.currentOwner || truncateWallet(product.currentOwnerWallet) || 'N/A')}
             </span>
           </div>
         </div>
@@ -115,24 +118,46 @@ const ProductCard = ({ product, index = 0, onTransfer, currentUserWallet }) => {
           <div className="flex items-center gap-3">
             {product.status !== 'sold' && product.transferStatus === 'none' && (
               <div className="relative group/tooltip">
-                <motion.button
-                  whileHover={isOwner ? { scale: 1.05 } : {}}
-                  whileTap={isOwner ? { scale: 0.95 } : {}}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    if (isOwner) onTransfer();
-                  }}
-                  disabled={!isOwner}
-                  className={`flex items-center gap-2 px-3 py-1.5 text-xs font-bold rounded-xl transition-all border 
-                    ${isOwner 
-                      ? 'bg-indigo-600/20 hover:bg-indigo-600 text-indigo-400 hover:text-white border-indigo-500/30' 
-                      : 'bg-gray-800/40 text-gray-500 border-gray-700/50 cursor-not-allowed'
-                    }`}
-                >
-                  <ArrowRightLeft className="w-3.5 h-3.5" />
-                  Transfer
-                </motion.button>
-                
+                {product.status === 'at_retailer' ? (
+                  // Mark as Sold — only shown for retailer at InRetail stage
+                  <motion.button
+                    whileHover={isOwner ? { scale: 1.05 } : {}}
+                    whileTap={isOwner ? { scale: 0.95 } : {}}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      if (isOwner) onTransfer();
+                    }}
+                    disabled={!isOwner}
+                    className={`flex items-center gap-2 px-3 py-1.5 text-xs font-bold rounded-xl transition-all border 
+                      ${isOwner
+                        ? 'bg-emerald-600/20 hover:bg-emerald-600 text-emerald-400 hover:text-white border-emerald-500/30'
+                        : 'bg-gray-800/40 text-gray-500 border-gray-700/50 cursor-not-allowed'
+                      }`}
+                  >
+                    <ShoppingBag className="w-3.5 h-3.5" />
+                    Mark as Sold
+                  </motion.button>
+                ) : (
+                  // Regular custody transfer
+                  <motion.button
+                    whileHover={isOwner ? { scale: 1.05 } : {}}
+                    whileTap={isOwner ? { scale: 0.95 } : {}}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      if (isOwner) onTransfer();
+                    }}
+                    disabled={!isOwner}
+                    className={`flex items-center gap-2 px-3 py-1.5 text-xs font-bold rounded-xl transition-all border 
+                      ${isOwner
+                        ? 'bg-indigo-600/20 hover:bg-indigo-600 text-indigo-400 hover:text-white border-indigo-500/30'
+                        : 'bg-gray-800/40 text-gray-500 border-gray-700/50 cursor-not-allowed'
+                      }`}
+                  >
+                    <ArrowRightLeft className="w-3.5 h-3.5" />
+                    Transfer
+                  </motion.button>
+                )}
+
                 {/* Tooltip for non-owners */}
                 {!isOwner && (
                   <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max px-2 py-1 bg-gray-900 border border-white/10 text-gray-300 text-[10px] rounded opacity-0 group-hover/tooltip:opacity-100 transition-opacity pointer-events-none">

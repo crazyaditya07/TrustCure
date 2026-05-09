@@ -65,7 +65,7 @@ async function startEventListener(io) {
                     name: productId, // Will be enriched by frontend POST if present
                     batchNumber: batchNumber,
                     currentStage: 'Manufactured',
-                    status: 'Manufactured',
+                    status: 'MANUFACTURED',
                     currentOwner: manufacturerAddr,
                     manufacturer: {
                         walletAddress: manufacturerAddr,
@@ -101,7 +101,7 @@ async function startEventListener(io) {
                     { upsert: true, new: true }
                 );
 
-                console.log(`✅ MongoDB Upserted: ProductMinted TokenID ${tokenId} -> Owner: ${manufacturerAddr}`);
+                console.log(`✅ MongoDB Upserted: ProductMinted TokenID ${tokenId} -> MANUFACTURED | Owner: ${manufacturerAddr}`);
 
                 if (io) {
                     io.emit("productMinted", {
@@ -223,7 +223,7 @@ async function startEventListener(io) {
                 const retailUser = await User.findOne({ walletAddress: retailAddr });
 
                 product.currentOwner = retailAddr;
-                product.status = "DELIVERED";
+                product.status = "AT_RETAILER";
                 product.currentStage = "InRetail";
                 if (retailUser) product.retailer_id = retailUser._id;
 
@@ -238,9 +238,9 @@ async function startEventListener(io) {
                 });
 
                 await product.save();
-                console.log(`✅ MongoDB Updated: TokenID ${tokenId} -> DELIVERED | Owner: ${retailAddr}`);
+                console.log(`✅ MongoDB Updated: TokenID ${tokenId} -> AT_RETAILER | Owner: ${retailAddr}`);
                 
-                if (io) io.emit("productUpdate", { tokenId: Number(tokenId), status: "DELIVERED" });
+                if (io) io.emit("productUpdate", { tokenId: Number(tokenId), status: "AT_RETAILER" });
 
                 // Log Event for Action History
                 try {
@@ -288,10 +288,14 @@ async function startEventListener(io) {
 
                 product.checkpoints.push({
                     timestamp: new Date(),
-                    location: { address: "Customer" },
+                    location: { address: "Point of Sale" },
                     stage: "Sold",
                     transactionHash: txHash,
-                    notes: "Product Sold"
+                    notes: "Product Sold",
+                    metadata: new Map([
+                        ['role', 'RETAILER'],
+                        ['action', 'SOLD']
+                    ])
                 });
 
                 await product.save();

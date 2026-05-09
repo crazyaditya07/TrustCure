@@ -11,8 +11,6 @@ import { useAuth } from '../contexts/AuthContext'
 
 const Home = () => {
     const { isAuthenticated } = useAuth();
-    // Note: copied from pages_new/Home.jsx content and adapted slightly if needed
-    // Assuming pages_new/Home.jsx content is correct and compatible
     const containerVariants = {
         hidden: { opacity: 0 },
         visible: {

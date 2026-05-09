@@ -3,7 +3,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const http = require('http');
-console.log(`🔍 DEBUG: SEPOLIA_RPC_URL length=${process.env.SEPOLIA_RPC_URL?.length}, URL=${process.env.SEPOLIA_RPC_URL}`);
+
 
 // Suppress ethers v6 "filter not found" errors common with public RPC nodes
 process.on('unhandledRejection', (reason) => {

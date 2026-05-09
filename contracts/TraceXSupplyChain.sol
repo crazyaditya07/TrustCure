@@ -396,7 +396,7 @@ contract TraceXSupplyChain is ERC721URIStorage, AccessControl {
             if (!hasRole(RETAILER_ROLE, recipient))
                 revert TraceX__WrongRecipientRole(tokenId, next, recipient);
         }
-        // next == Stage.Sold: no role check — recipient is a consumer.
+        // next == Stage.Sold: markAsSold() handles this — no transferCustody to consumer.
 
         // ══════════════════════════════════════════════════════
         // ATOMIC STATE MUTATION — No early returns below this line.
@@ -433,6 +433,71 @@ contract TraceXSupplyChain is ERC721URIStorage, AccessControl {
 
         // ── Mutation 5: Emit Lifecycle Event ────────────────────
         emit LifecycleTransition(tokenId, msg.sender, recipient, next, block.timestamp);
+    }
+
+    /**
+     * @notice Mark a product as sold without transferring NFT ownership.
+     *
+     * Called by a RETAILER_ROLE holder who is the current on-chain owner of the token.
+     * The product stage advances to Sold and is permanently locked (isLocked = true).
+     * Ownership of the NFT remains with the retailer — no consumer wallet is needed.
+     *
+     * This is the terminal action in the supply chain. After this call:
+     *   • The product cannot be transferred (Phase 4 lockdown + isLocked guard).
+     *   • The stage is permanently Sold.
+     *   • A final immutable checkpoint is appended with RoleType.Retailer.
+     *
+     * @param tokenId  The on-chain token ID of the product to mark as sold.
+     */
+    function markAsSold(uint256 tokenId) external {
+
+        // ── Guard 0: Existence ──────────────────────────────────
+        ProductMeta storage meta = _metadata[tokenId];
+        if (meta.physicalIdHash == bytes32(0)) {
+            revert TraceX__ProductNotFound(tokenId);
+        }
+
+        // ── Guard 1: Terminal State ─────────────────────────────
+        if (meta.isLocked) {
+            revert TraceX__ProductFrozen(tokenId);
+        }
+
+        // ── Guard 2: Custody ────────────────────────────────────
+        if (ownerOf(tokenId) != msg.sender) {
+            revert TraceX__NotTokenOwner(tokenId, msg.sender);
+        }
+
+        // ── Guard 3: Sender Must Be Retailer at InRetail Stage ──
+        if (meta.currentStage != Stage.InRetail) {
+            revert TraceX__WrongSenderRole(tokenId, meta.currentStage);
+        }
+        if (!hasRole(RETAILER_ROLE, msg.sender)) {
+            revert TraceX__WrongSenderRole(tokenId, meta.currentStage);
+        }
+
+        // ══════════════════════════════════════════════════════
+        // ATOMIC STATE MUTATION
+        // ══════════════════════════════════════════════════════
+
+        // ── Mutation 1: Advance Stage to Sold ───────────────────
+        meta.currentStage = Stage.Sold;
+
+        // ── Mutation 2: Lock the Product ─────────────────────────
+        meta.isLocked = true;
+
+        // ── Mutation 3: Append Final Checkpoint ──────────────────
+        // handler = retailer wallet (msg.sender). No consumer address stored.
+        _provenance[tokenId].push(Checkpoint({
+            handler:      msg.sender,
+            roleSnapshot: RoleType.Retailer,
+            stage:        Stage.Sold,
+            timestamp:    block.timestamp,
+            locationHash: bytes32(0) // No location required for point-of-sale
+        }));
+
+        // ── Mutation 4: Emit Lifecycle Event ─────────────────────
+        // `to` is address(0) to signal no ownership transfer occurred.
+        emit LifecycleTransition(tokenId, msg.sender, address(0), Stage.Sold, block.timestamp);
     }
 
     // ─────────────────────────────────────────────────────────

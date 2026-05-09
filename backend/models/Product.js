@@ -65,8 +65,9 @@ const productSchema = new mongoose.Schema({
         default: 'Created'
     },
     status: {
-        type: String, // Lifecycle status: IN_TRANSIT, DELIVERED, SOLD
-        default: 'Manufactured'
+        type: String,
+        enum: ['MANUFACTURED', 'IN_TRANSIT', 'AT_RETAILER', 'SOLD'],
+        default: 'MANUFACTURED'
     },
     currentOwner: {
         type: String, // wallet address
@@ -84,10 +85,11 @@ const productSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User'
     },
-    consumer_id: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User'
-    },
+    // consumer_id removed to ensure anonymity as per Issue 2 requirements
+    // consumer_id: {
+    //     type: mongoose.Schema.Types.ObjectId,
+    //     ref: 'User'
+    // },
     manufacturer: {
         walletAddress: String,
         name: String,

@@ -6,6 +6,7 @@ import {
   LayoutDashboard,
   ScanLine,
   PlusCircle,
+  History,
   Menu,
   X,
   LogOut,
@@ -42,6 +43,7 @@ const Navbar = () => {
     { path: '/scan', label: 'Verify', icon: ScanLine },
     ...(isAuthenticated ? [
       { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+      ...(!isManufacturerOrAdmin ? [{ path: '/my-scans', label: 'My Scans', icon: History }] : []),
       ...(isManufacturerOrAdmin ? [{ path: '/create-product', label: 'Create', icon: PlusCircle }] : [])
     ] : [])
   ]

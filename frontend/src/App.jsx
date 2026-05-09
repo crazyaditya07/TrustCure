@@ -3,13 +3,10 @@ import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'r
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { Web3Provider, useWeb3 } from './contexts/Web3Context';
 import { NotificationProvider } from './contexts/NotificationContext';
-// Use the new Navbar
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 
-// Use new/existing pages
-// Note: We'll likely need to update these component imports if we rename or move files
-// For now, assume we will update the files in place or redirect imports
+// Pages
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -19,6 +16,7 @@ import ConsumerView from './pages/ConsumerView';
 import ScanProduct from './pages/ScanProduct';
 import ManageUsers from './pages/ManageUsers';
 import CreateProduct from './pages/CreateProduct';
+import MyScans from './pages/MyScans';
 
 import { AnimatePresence, motion } from 'framer-motion';
 
@@ -188,6 +186,14 @@ function AppContent() {
                             <Route
                                 path="/scan"
                                 element={<AnimatedPage><ScanProduct /></AnimatedPage>}
+                            />
+                            <Route
+                                path="/my-scans"
+                                element={
+                                    <ProtectedRoute>
+                                        <AnimatedPage><MyScans /></AnimatedPage>
+                                    </ProtectedRoute>
+                                }
                             />
                             <Route
                                 path="/create-product"

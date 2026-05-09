@@ -1,138 +1,142 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { X, Send, User, ChevronRight, AlertCircle, Loader2, CheckCircle2 } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { X, Send, User, ChevronRight, AlertCircle, Loader2, CheckCircle2, ShoppingBag } from 'lucide-react';
 import axios from 'axios';
 import { useWeb3 } from '../contexts/Web3Context';
+import { useAuth } from '../contexts/AuthContext';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 const TransferModal = ({ isOpen, onClose, product, onTransferInitiated }) => {
     const { account, signer, contracts } = useWeb3();
-    const [step, setStep] = useState(1); // 1: Select Recipient, 2: Confirm & Sign, 3: Success
-    const [recipients, setRecipients] = useState([]);
-    const [selectedRecipient, setSelectedRecipient] = useState(null);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState(null);
+    const { user } = useAuth();
 
-    // Determine next role based on current stage
+    // Is this a "Mark as Sold" action (retailer at InRetail)?
+    const isMarkAsSold = product?.currentStage === 'InRetail';
+
+    // For regular transfers: determine next role
     const getNextRole = (stage) => {
         switch (stage) {
             case 'Manufactured': return 'DISTRIBUTOR';
             case 'InDistribution': return 'RETAILER';
-            case 'InRetail': return 'CONSUMER';
             default: return null;
         }
     };
 
     const nextRole = getNextRole(product?.currentStage);
 
+    const [step, setStep] = useState(1); // 1: Select/Confirm, 2: Confirm & Sign, 3: Success
+    const [recipients, setRecipients] = useState([]);
+    const [selectedRecipient, setSelectedRecipient] = useState(null);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
+
+    // Reset on open
     useEffect(() => {
-        if (isOpen && nextRole && step === 1) {
+        if (isOpen) {
+            setStep(1);
+            setSelectedRecipient(null);
+            setError(null);
+        }
+    }, [isOpen]);
+
+    useEffect(() => {
+        if (isOpen && nextRole && step === 1 && !isMarkAsSold) {
             fetchRecipients();
         }
-    }, [isOpen, nextRole, step]);
+    }, [isOpen, nextRole, step, isMarkAsSold]);
 
     const fetchRecipients = async () => {
         setLoading(true);
         setError(null);
         try {
-            const response = await axios.get(`${API_URL}/users`, {
-                params: { role: nextRole }
-            });
-            // Filter out self
-            const filtered = response.data.filter(u => u.walletAddress.toLowerCase() !== account?.toLowerCase());
+            const response = await axios.get(`${API_URL}/users`, { params: { role: nextRole } });
+            const filtered = response.data.filter(u => u.walletAddress?.toLowerCase() !== account?.toLowerCase());
             setRecipients(filtered);
         } catch (err) {
-            console.error('Failed to fetch recipients:', err);
             setError('Could not load verified participants.');
         } finally {
             setLoading(false);
         }
     };
 
-    const handleInitiate = async () => {
-        if (!selectedRecipient || !signer || !contracts) return;
-
+    // ── Mark as Sold (on-chain + backend) ─────────────────────────────
+    const handleMarkAsSold = async () => {
         setLoading(true);
         setError(null);
-
         try {
-            // ========== STEP 1: VERIFY CONTRACT CONNECTION ==========
-            const contract = contracts.supplyChainNFT;
-            if (!contract) {
-                throw new Error("Contract not loaded. Please reconnect your wallet.");
-            }
-            console.log("CONNECTED CONTRACT:", contract.target);
-            console.log("SIGNER ADDRESS:", account);
-            console.log("EXPECTED CONTRACT: 0x313E14f51FEe170D19C3DCE9eFb03709E916510d");
+            const contract = contracts?.supplyChainNFT;
+            if (!contract) throw new Error('Contract not loaded. Please reconnect your wallet.');
 
-            // Validate ownership before call
-            if (!product.currentOwner || account.toLowerCase() !== product.currentOwner.toLowerCase()) {
-                throw new Error("Unauthorized: Connected wallet is not the owner of this product");
-            }
-
-            let onChainOwner;
-            try {
-                onChainOwner = await contract.ownerOf(product.tokenId);
-                console.log("ON-CHAIN OWNER:", onChainOwner);
-            } catch (verifErr) {
-                console.error("On-chain verification failed:", verifErr);
-                throw new Error("Blockchain verification failed: This product may not exist on the current network.");
-            }
-
+            // Verify on-chain ownership
+            const onChainOwner = await contract.ownerOf(product.tokenId);
             if (onChainOwner.toLowerCase() !== account.toLowerCase()) {
-                throw new Error(`Unauthorized: You are not the on-chain owner. Current owner: ${onChainOwner.slice(0,6)}...${onChainOwner.slice(-4)}`);
+                throw new Error('Unauthorized: Connected wallet is not the on-chain owner.');
             }
 
-            // ========== STEP 2: EXECUTE SMART CONTRACT TRANSFER ==========
-            const location = selectedRecipient.location?.city || "Unknown";
-            const notes = `Transferred to ${selectedRecipient.name}`;
-            
-            let tx;
-            console.log("MetaMask Triggered");
-            console.log(`TRANSFER: tokenId=${product.tokenId}, recipient=${selectedRecipient.walletAddress}, role=${nextRole}`);
-
-            if (nextRole === 'DISTRIBUTOR') {
-                tx = await contract["transferToDistributor(uint256,address)"](
-                    product.tokenId,
-                    selectedRecipient.walletAddress
-                );
-            } else if (nextRole === 'RETAILER') {
-                tx = await contract["transferToRetailer(uint256,address)"](
-                    product.tokenId,
-                    selectedRecipient.walletAddress
-                );
-            } else if (nextRole === 'CONSUMER') {
-                tx = await contract.markAsSold(
-                    product.tokenId
-                );
-            } else {
-                throw new Error("Invalid transfer stage.");
-            }
-
-            console.log("TX SUBMITTED:", tx.hash);
-            console.log("⏳ Waiting for confirmation...");
+            // Call markAsSold on the smart contract
+            const tx = await contract.markAsSold(product.tokenId);
+            console.log('TX SUBMITTED (markAsSold):', tx.hash);
             const receipt = await tx.wait();
-            console.log("TX SUCCESS:", tx.hash);
-            console.log("BLOCK:", receipt.blockNumber);
-            console.log("GAS USED:", receipt.gasUsed?.toString());
+            console.log('TX CONFIRMED:', tx.hash, '| Block:', receipt.blockNumber);
 
-            // Log emitted events from receipt
-            if (receipt.logs && receipt.logs.length > 0) {
-                console.log(`EVENTS EMITTED: ${receipt.logs.length} log(s)`);
-                receipt.logs.forEach((log, i) => {
-                    try {
-                        const parsed = contract.interface.parseLog(log);
-                        if (parsed) {
-                            console.log(`  EVENT[${i}]: ${parsed.name}`, parsed.args);
-                        }
-                    } catch (e) { /* skip unparseable logs */ }
-                });
+            // Sync with backend — no consumer wallet required
+            await axios.post(`${API_URL}/products/${product.productId}/mark-sold`, {
+                retailerWallet: account,
+                retailerName: user?.name || 'Retailer',
+                retailerEmail: user?.email || null,
+                transactionHash: tx.hash,
+                notes: 'Product marked as sold at retail point'
+            });
+
+            setStep(3);
+            if (onTransferInitiated) onTransferInitiated();
+        } catch (err) {
+            console.error('MARK AS SOLD ERROR:', err);
+            let msg;
+            if (err.code === 'ACTION_REJECTED' || err.code === 4001) msg = 'Transaction rejected by user in MetaMask.';
+            else if (err.code === 'CALL_EXCEPTION') msg = `Transaction failed on-chain: ${err.reason || err.message}`;
+            else if (err.code === 'INSUFFICIENT_FUNDS') msg = 'Insufficient ETH for gas fees.';
+            else if (err.response?.data?.error) msg = err.response.data.error;
+            else msg = err?.reason || err.message || 'Failed to mark as sold.';
+            setError(msg);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // ── Regular Transfer (Manufacturer→Distributor, Distributor→Retailer) ──
+    const handleTransfer = async () => {
+        if (!selectedRecipient || !signer || !contracts) return;
+        setLoading(true);
+        setError(null);
+        try {
+            const contract = contracts.supplyChainNFT;
+            if (!contract) throw new Error('Contract not loaded. Please reconnect your wallet.');
+
+            if (!product.currentOwner || account.toLowerCase() !== product.currentOwner.toLowerCase()) {
+                throw new Error('Unauthorized: Connected wallet is not the owner of this product');
             }
 
-            // ========== POST-TRANSACTION: Update backend ==========
-            const nextStage = nextRole === 'DISTRIBUTOR' ? 'InDistribution' : nextRole === 'RETAILER' ? 'InRetail' : 'Sold';
-            
+            const onChainOwner = await contract.ownerOf(product.tokenId);
+            if (onChainOwner.toLowerCase() !== account.toLowerCase()) {
+                throw new Error(`Unauthorized: You are not the on-chain owner.`);
+            }
+
+            let tx;
+            if (nextRole === 'DISTRIBUTOR') {
+                tx = await contract['transferToDistributor(uint256,address)'](product.tokenId, selectedRecipient.walletAddress);
+            } else if (nextRole === 'RETAILER') {
+                tx = await contract['transferToRetailer(uint256,address)'](product.tokenId, selectedRecipient.walletAddress);
+            } else {
+                throw new Error('Invalid transfer stage.');
+            }
+
+            console.log('TX SUBMITTED:', tx.hash);
+            const receipt = await tx.wait();
+            console.log('TX SUCCESS:', tx.hash, '| Block:', receipt.blockNumber);
+
+            const nextStage = nextRole === 'DISTRIBUTOR' ? 'InDistribution' : 'InRetail';
             await axios.post(`${API_URL}/products/${product.productId}/checkpoints`, {
                 timestamp: new Date(),
                 location: selectedRecipient.location || { address: 'Unknown', city: 'Unknown', country: 'Unknown' },
@@ -144,44 +148,27 @@ const TransferModal = ({ isOpen, onClose, product, onTransferInitiated }) => {
                 transactionHash: tx.hash
             });
 
-            setStep(3); // Success UI
+            setStep(3);
             if (onTransferInitiated) onTransferInitiated();
-
         } catch (err) {
-            // ========== STEP 3: CATEGORIZED ERROR HANDLING ==========
-            console.error("TRANSFER ERROR:", err);
-
-            let userMessage;
-            if (err.code === 'ACTION_REJECTED' || err.code === 4001) {
-                userMessage = "Transaction rejected by user in MetaMask.";
-            } else if (err.code === 'CALL_EXCEPTION') {
-                userMessage = `Transaction failed on-chain: ${err.reason || err.message}`;
-            } else if (err.code === 'NETWORK_ERROR' || err.code === 'SERVER_ERROR') {
-                userMessage = "Network error. Please check your connection and try again.";
-            } else if (err.code === 'INSUFFICIENT_FUNDS') {
-                userMessage = "Insufficient ETH for gas fees.";
-            } else {
-                userMessage = err?.reason || err.message || 'Failed to execute transfer.';
-            }
-
-            setError(userMessage);
+            console.error('TRANSFER ERROR:', err);
+            let msg;
+            if (err.code === 'ACTION_REJECTED' || err.code === 4001) msg = 'Transaction rejected by user in MetaMask.';
+            else if (err.code === 'CALL_EXCEPTION') msg = `Transaction failed on-chain: ${err.reason || err.message}`;
+            else if (err.code === 'INSUFFICIENT_FUNDS') msg = 'Insufficient ETH for gas fees.';
+            else if (err.response?.data?.error) msg = err.response.data.error;
+            else msg = err?.reason || err.message || 'Failed to execute transfer.';
+            setError(msg);
         } finally {
             setLoading(false);
         }
-    };
-
-
-    const getNextStageName = (stage) => {
-        const stages = ['Manufactured', 'InDistribution', 'InRetail', 'Sold'];
-        const idx = stages.indexOf(stage);
-        return idx !== -1 && idx < stages.length - 1 ? stages[idx + 1] : stage;
     };
 
     if (!isOpen) return null;
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-            <motion.div 
+            <motion.div
                 initial={{ opacity: 0, scale: 0.95, y: 20 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -190,7 +177,9 @@ const TransferModal = ({ isOpen, onClose, product, onTransferInitiated }) => {
                 {/* Header */}
                 <div className="px-6 py-5 border-b border-slate-800 flex items-center justify-between bg-gradient-to-r from-slate-900 via-indigo-950/20 to-slate-900">
                     <div>
-                        <h3 className="text-xl font-bold text-white">Initiate Transfer</h3>
+                        <h3 className="text-xl font-bold text-white">
+                            {isMarkAsSold ? 'Mark as Sold' : 'Initiate Transfer'}
+                        </h3>
                         <p className="text-xs text-slate-400 mt-1">Product: {product?.name} (#{product?.tokenId})</p>
                     </div>
                     <button onClick={onClose} className="p-2 hover:bg-slate-800 rounded-full transition-colors">
@@ -200,12 +189,69 @@ const TransferModal = ({ isOpen, onClose, product, onTransferInitiated }) => {
 
                 {/* Content */}
                 <div className="p-6">
-                    {step === 1 && (
+
+                    {/* ── MARK AS SOLD — Step 1: Confirm ── */}
+                    {isMarkAsSold && step === 1 && (
+                        <div className="space-y-5">
+                            <div className="flex flex-col items-center text-center gap-3 py-4">
+                                <div className="w-16 h-16 rounded-2xl bg-emerald-500/15 flex items-center justify-center">
+                                    <ShoppingBag className="w-8 h-8 text-emerald-400" />
+                                </div>
+                                <div>
+                                    <p className="text-white font-semibold text-base">Confirm Sale</p>
+                                    <p className="text-slate-400 text-sm mt-1 leading-relaxed">
+                                        This will permanently mark <span className="text-white font-medium">{product?.name}</span> as sold on the blockchain.
+                                        Ownership stays with your wallet — no consumer transfer required.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="bg-slate-800/50 p-4 rounded-2xl border border-slate-700 space-y-3">
+                                <div className="flex justify-between items-center">
+                                    <span className="text-slate-400 text-sm">Product</span>
+                                    <span className="text-white font-medium">{product?.name}</span>
+                                </div>
+                                <div className="flex justify-between items-center">
+                                    <span className="text-slate-400 text-sm">Token ID</span>
+                                    <span className="text-white font-medium">#{product?.tokenId}</span>
+                                </div>
+                                <div className="flex justify-between items-center">
+                                    <span className="text-slate-400 text-sm">Current Stage</span>
+                                    <span className="text-cyan-400 font-medium text-xs px-2 py-0.5 bg-cyan-500/10 rounded-lg">At Retailer</span>
+                                </div>
+                                <div className="flex justify-between items-center">
+                                    <span className="text-slate-400 text-sm">Next Stage</span>
+                                    <span className="text-emerald-400 font-medium text-xs px-2 py-0.5 bg-emerald-500/10 rounded-lg">Sold ✓</span>
+                                </div>
+                            </div>
+
+                            <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-2xl flex items-start gap-3">
+                                <AlertCircle className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
+                                <p className="text-xs text-amber-200/80 leading-relaxed">
+                                    This action is <strong>irreversible</strong>. The product will be permanently frozen on-chain at the Sold stage.
+                                </p>
+                            </div>
+
+                            {error && <p className="text-center text-red-400 text-xs">{error}</p>}
+
+                            <button
+                                onClick={handleMarkAsSold}
+                                disabled={loading}
+                                className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold rounded-2xl transition-all shadow-lg shadow-emerald-600/20 flex items-center justify-center gap-2"
+                            >
+                                {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <ShoppingBag className="w-5 h-5" />}
+                                {loading ? 'Processing...' : 'Confirm & Mark as Sold'}
+                            </button>
+                        </div>
+                    )}
+
+                    {/* ── REGULAR TRANSFER — Step 1: Select Recipient ── */}
+                    {!isMarkAsSold && step === 1 && (
                         <div className="space-y-4">
                             <label className="block text-sm font-medium text-slate-300">
                                 Select Verified {nextRole?.charAt(0) + nextRole?.slice(1).toLowerCase()}
                             </label>
-                            
+
                             {loading ? (
                                 <div className="flex flex-col items-center justify-center py-12 space-y-3">
                                     <Loader2 className="w-8 h-8 text-indigo-500 animate-spin" />
@@ -219,29 +265,27 @@ const TransferModal = ({ isOpen, onClose, product, onTransferInitiated }) => {
                             ) : (
                                 <div className="max-h-[300px] overflow-y-auto pr-2 custom-scrollbar space-y-2">
                                     {recipients.length > 0 ? (
-                                        recipients.map((user) => (
+                                        recipients.map((u) => (
                                             <button
-                                                key={user.walletAddress}
-                                                onClick={() => setSelectedRecipient(user)}
+                                                key={u.walletAddress}
+                                                onClick={() => setSelectedRecipient(u)}
                                                 className={`w-full p-4 rounded-2xl border transition-all flex items-center gap-4 text-left group
-                                                    ${selectedRecipient?.walletAddress === user.walletAddress 
-                                                        ? 'bg-indigo-600/20 border-indigo-500 shadow-lg shadow-indigo-500/10' 
+                                                    ${selectedRecipient?.walletAddress === u.walletAddress
+                                                        ? 'bg-indigo-600/20 border-indigo-500 shadow-lg shadow-indigo-500/10'
                                                         : 'bg-slate-800/50 border-slate-700 hover:border-slate-600'}`}
                                             >
                                                 <div className={`p-2 rounded-xl flex-shrink-0 transition-colors
-                                                    ${selectedRecipient?.walletAddress === user.walletAddress 
-                                                        ? 'bg-indigo-500 text-white' 
+                                                    ${selectedRecipient?.walletAddress === u.walletAddress
+                                                        ? 'bg-indigo-500 text-white'
                                                         : 'bg-slate-700 text-slate-400 group-hover:bg-slate-600'}`}>
                                                     <User className="w-5 h-5" />
                                                 </div>
                                                 <div className="flex-1 min-w-0">
-                                                    <p className="font-semibold text-white truncate">{user.name}</p>
-                                                    <p className="text-xs text-slate-400 truncate">{user.company} • {user.walletAddress.slice(0,6)}...{user.walletAddress.slice(-4)}</p>
+                                                    <p className="font-semibold text-white truncate">{u.name}</p>
+                                                    <p className="text-xs text-slate-400 truncate">{u.company} • {u.walletAddress.slice(0, 6)}...{u.walletAddress.slice(-4)}</p>
                                                 </div>
-                                                {selectedRecipient?.walletAddress === user.walletAddress && (
-                                                    <motion.div layoutId="check" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                                                        <CheckCircle2 className="w-5 h-5 text-indigo-500" />
-                                                    </motion.div>
+                                                {selectedRecipient?.walletAddress === u.walletAddress && (
+                                                    <CheckCircle2 className="w-5 h-5 text-indigo-500 flex-shrink-0" />
                                                 )}
                                             </button>
                                         ))
@@ -263,7 +307,8 @@ const TransferModal = ({ isOpen, onClose, product, onTransferInitiated }) => {
                         </div>
                     )}
 
-                    {step === 2 && (
+                    {/* ── REGULAR TRANSFER — Step 2: Confirm & Sign ── */}
+                    {!isMarkAsSold && step === 2 && (
                         <div className="space-y-6">
                             <div className="bg-slate-800/50 p-6 rounded-3xl border border-slate-700 space-y-4">
                                 <h4 className="text-sm font-bold text-slate-400 uppercase tracking-wider">Transfer Summary</h4>
@@ -276,7 +321,7 @@ const TransferModal = ({ isOpen, onClose, product, onTransferInitiated }) => {
                                         <span className="text-slate-400 text-sm">Token ID</span>
                                         <span className="text-white font-medium">#{product.tokenId}</span>
                                     </div>
-                                    <div className="h-px bg-slate-700 my-2"></div>
+                                    <div className="h-px bg-slate-700 my-2" />
                                     <div className="flex justify-between items-center">
                                         <span className="text-slate-400 text-sm">Recipient</span>
                                         <span className="text-indigo-400 font-bold">{selectedRecipient.name}</span>
@@ -291,19 +336,16 @@ const TransferModal = ({ isOpen, onClose, product, onTransferInitiated }) => {
                             <div className="p-4 bg-indigo-500/10 border border-indigo-500/20 rounded-2xl flex items-start gap-3">
                                 <AlertCircle className="w-5 h-5 text-indigo-400 flex-shrink-0 mt-0.5" />
                                 <p className="text-xs text-indigo-200/80 leading-relaxed">
-                                    By confirming, your wallet will prompt an Ethereum transaction to permanently transfer the custody of this product to the recipient directly on-chain.
+                                    By confirming, your wallet will prompt an Ethereum transaction to permanently transfer custody of this product on-chain.
                                 </p>
                             </div>
 
                             <div className="flex gap-3">
-                                <button
-                                    onClick={() => setStep(1)}
-                                    className="flex-1 py-4 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-2xl transition-all"
-                                >
+                                <button onClick={() => setStep(1)} className="flex-1 py-4 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-2xl transition-all">
                                     Back
                                 </button>
                                 <button
-                                    onClick={handleInitiate}
+                                    onClick={handleTransfer}
                                     disabled={loading}
                                     className="flex-[2] py-4 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-2xl transition-all shadow-lg shadow-indigo-600/20 flex items-center justify-center gap-2"
                                 >
@@ -315,18 +357,23 @@ const TransferModal = ({ isOpen, onClose, product, onTransferInitiated }) => {
                         </div>
                     )}
 
+                    {/* ── Step 3: Success ── */}
                     {step === 3 && (
                         <div className="text-center py-8 space-y-6">
                             <div className="w-20 h-20 bg-emerald-500/20 rounded-full flex items-center justify-center mx-auto shadow-xl shadow-emerald-500/10">
                                 <CheckCircle2 className="w-10 h-10 text-emerald-500" />
                             </div>
                             <div>
-                                <h3 className="text-2xl font-bold text-white">Transfer Completed!</h3>
+                                <h3 className="text-2xl font-bold text-white">
+                                    {isMarkAsSold ? 'Product Sold!' : 'Transfer Completed!'}
+                                </h3>
                                 <p className="text-emerald-400 mt-2 mb-1 font-semibold text-sm px-6">
                                     Transaction confirmed successfully.
                                 </p>
                                 <p className="text-slate-400 text-sm leading-relaxed px-6">
-                                    The blockchain transaction has been finalized. The product has been securely transferred to {selectedRecipient.name}.
+                                    {isMarkAsSold
+                                        ? 'The product has been permanently marked as sold on the blockchain. The lifecycle is now frozen.'
+                                        : `The product has been securely transferred to ${selectedRecipient?.name}.`}
                                 </p>
                             </div>
                             <button

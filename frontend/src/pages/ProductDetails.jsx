@@ -53,11 +53,25 @@ function ProductDetails() {
             );
 
             if (!response.ok) {
-                throw new Error('Product not found');
+                const errData = await response.json().catch(() => ({}));
+                throw new Error(errData.hint || errData.error || 'Product not found');
             }
 
             const data = await response.json();
             setProduct(data);
+
+            // Record scan in history if user is logged in (authenticated)
+            if (isAuthenticated && user?._id) {
+                fetch(`${API_URL}/api/consumer/scans`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        userId: user._id,
+                        productId: productId,
+                        productName: data.name
+                    })
+                }).catch(err => console.error('Failed to record scan history:', err));
+            }
         } catch (err) {
             console.error('Failed to fetch product:', err);
             setError(err.message);
@@ -134,7 +148,7 @@ function ProductDetails() {
             <div className="empty-state">
                 <div className="empty-state-icon">❌</div>
                 <h3 className="empty-state-title">Product Not Found</h3>
-                <p className="empty-state-description">{error}</p>
+                <p className="empty-state-description" style={{ maxWidth: '480px', margin: '0 auto 16px' }}>{error}</p>
                 <Link to="/scan" className="btn btn-primary">
                     Try Scanning Again
                 </Link>

@@ -1,9 +1,0 @@
-
-==================================================
-STEP 3 — VERIFY ROLE LOGIC ON-CHAIN
-==================================================
-hasRole(DISTRIBUTOR_ROLE, 0x2222222222222222222222222222222222222222): true
-hasRole(MANUFACTURER_ROLE, 0x3f127F2FfdFE92D2C5BdB075eb0B77682F7B858E): true
-ownerOf(1): 0x3f127F2FfdFE92D2C5BdB075eb0B77682F7B858E
-Is msg.sender the current owner? true
-==================================================

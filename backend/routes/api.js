@@ -4,6 +4,7 @@ const User = require('../models/User');
 const Product = require('../models/Product');
 const Event = require('../models/Event');
 const Transfer = require('../models/Transfer');
+const ConsumerHistory = require('../models/ConsumerHistory');
 const { ethers } = require('ethers');
 const {
     maskWallet,
@@ -160,20 +161,31 @@ router.get('/users', async (req, res) => {
 
 const enrichProducts = (products) => {
     return products.map(p => {
-        const product = p.toObject ? p.toObject() : p;
-        let ownerName = 'Unknown';
-        if (product.currentStage === 'Manufactured' && product.manufacturer_id && product.manufacturer_id.name) {
-            ownerName = product.manufacturer_id.name;
-        } else if (product.currentStage === 'InDistribution' && product.distributor_id && product.distributor_id.name) {
-            ownerName = product.distributor_id.name;
-        } else if (product.currentStage === 'InRetail' && product.retailer_id && product.retailer_id.name) {
-            ownerName = product.retailer_id.name;
-        } else if (product.currentStage === 'Sold' && product.consumer_id && product.consumer_id.name) {
-            ownerName = product.consumer_id.name;
+        try {
+            const product = p.toObject ? p.toObject() : { ...p };
+
+            // Ensure no consumer_id ever leaks
+            delete product.consumer_id;
+
+            let ownerName = 'Unknown';
+            if (product.currentStage === 'Manufactured' && product.manufacturer_id && product.manufacturer_id.name) {
+                ownerName = product.manufacturer_id.name;
+            } else if (product.currentStage === 'InDistribution' && product.distributor_id && product.distributor_id.name) {
+                ownerName = product.distributor_id.name;
+            } else if (product.currentStage === 'InRetail' && product.retailer_id && product.retailer_id.name) {
+                ownerName = product.retailer_id.name;
+            } else if (product.currentStage === 'Sold') {
+                ownerName = 'End Consumer';
+                product.currentOwner = '0x0000...0000';
+            }
+
+            product.currentOwnerName = ownerName;
+            return product;
+        } catch (e) {
+            console.error('enrichProducts: skipping malformed product', e.message);
+            return null;
         }
-        product.currentOwnerName = ownerName;
-        return product;
-    });
+    }).filter(Boolean);
 };
 
 // Get all products with optional filters
@@ -196,7 +208,7 @@ router.get('/products', async (req, res) => {
         if (batchNumber) query.batchNumber = batchNumber;
 
         const products = await Product.find(query)
-            .populate('manufacturer_id distributor_id retailer_id consumer_id', 'name')
+            .populate('manufacturer_id distributor_id retailer_id', 'name')
             .skip(parseInt(offset))
             .limit(parseInt(limit))
             .sort({ createdAt: -1 });
@@ -218,7 +230,6 @@ router.get('/products', async (req, res) => {
 // Get single product by ID
 router.get('/products/:productId', async (req, res) => {
     try {
-        console.log("BACKEND: FETCHING PRODUCT WITH ID/TOKEN:", req.params.productId);
 
         // ============================================================
         // CONSUMER VIEW: ?view=consumer — backend-enforced whitelist
@@ -303,10 +314,15 @@ router.get('/products/:productId', async (req, res) => {
         });
 
         if (!product) {
-            return res.status(404).json({ error: 'Product not found' });
+            return res.status(404).json({
+                error: 'Product not found',
+                hint: `No product matched productId="${req.params.productId}" or tokenId=${parseInt(req.params.productId) || 'N/A'}. Use the TRX-XXXXXXXX product ID shown on the label.`
+            });
         }
 
-        res.json(product);
+        // Use enrichProducts to ensure privacy masking is applied even for single lookups
+        const [enrichedProduct] = enrichProducts([product]);
+        res.json(enrichedProduct);
     } catch (error) {
         console.error('Get product error:', error);
         res.status(500).json({ error: 'Failed to get product' });
@@ -317,7 +333,6 @@ router.get('/products/:productId', async (req, res) => {
 router.get('/products/:productId/history', async (req, res) => {
     try {
         const { userRoles, userAddress } = req.query;
-        console.log("BACKEND: FETCHING HISTORY FOR PRODUCT ID/TOKEN:", req.params.productId);
 
         // Parse comma-separated roles
         const rolesArray = userRoles ? userRoles.split(',') : ['CONSUMER'];
@@ -355,12 +370,25 @@ router.get('/products/:productId/history', async (req, res) => {
 router.post('/products', async (req, res) => {
     try {
         const productData = req.body;
-        console.log("BACKEND: RECEIVED PRODUCT DATA:", productData);
         
-        // Ensure tokenId is present for on-chain products
-        if (!productData.tokenId) {
+        // Ensure tokenId is present and a number
+        if (productData.tokenId === undefined || productData.tokenId === null) {
             console.error("BACKEND ERROR: Missing tokenId in request");
-            return res.status(400).json({ error: 'tokenId is required for product synchronization' });
+            return res.status(400).json({ error: 'tokenId is required' });
+        }
+        productData.tokenId = Number(productData.tokenId);
+
+        // Map currentStage to status enum to ensure DB consistency
+        const stageToStatus = {
+            'Created': 'MANUFACTURED',
+            'Manufactured': 'MANUFACTURED',
+            'InDistribution': 'IN_TRANSIT',
+            'InRetail': 'AT_RETAILER',
+            'Sold': 'SOLD'
+        };
+
+        if (productData.currentStage && !productData.status) {
+            productData.status = stageToStatus[productData.currentStage] || 'MANUFACTURED';
         }
 
         // Auto-populate manufacturer_id from wallet lookup so enrichProducts() works
@@ -385,20 +413,36 @@ router.post('/products', async (req, res) => {
             productData.currentOwner = productData.currentOwner.toLowerCase();
         }
 
+        // PRE-CHECK: Ensure productId is unique if we're creating a new one
+        // This prevents 11000 errors if the user re-uses an ID from a previous attempt
+        if (productData.productId) {
+            const existingById = await Product.findOne({ 
+                productId: productData.productId, 
+                tokenId: { $ne: productData.tokenId } 
+            });
+            if (existingById) {
+                return res.status(400).json({ 
+                    error: `Product ID ${productData.productId} is already in use by another token (ID: ${existingById.tokenId}). Please use a unique Product ID.` 
+                });
+            }
+        }
+
         const product = await Product.findOneAndUpdate(
             { tokenId: productData.tokenId }, // tokenId is canonical key
             { 
                ...productData,
                productId: productData.productId || `TRX-${Math.random().toString(36).substring(2, 10).toUpperCase()}`
             },
-            { upsert: true, new: true }
+            { upsert: true, new: true, runValidators: false } // runValidators: false to be safe during migration
         );
-        console.log("BACKEND: SAVED/UPDATED PRODUCT:", product._id, "| Owner:", product.currentOwner);
 
         res.json(product);
     } catch (error) {
-        console.error('Create product error:', error);
-        res.status(500).json({ error: 'Failed to create product' });
+        console.error('Create product error details:', error);
+        res.status(500).json({ 
+            error: 'Failed to create product',
+            details: error.message
+        });
     }
 });
 
@@ -443,15 +487,78 @@ router.post('/products/:productId/checkpoints', async (req, res) => {
     }
 });
 
+// Mark product as sold (Retailer only — no consumer transfer)
+router.post('/products/:productId/mark-sold', async (req, res) => {
+    try {
+        const { retailerWallet, retailerName, retailerEmail, transactionHash, notes } = req.body;
+
+        const product = await Product.findOne({
+            $or: [
+                { productId: req.params.productId },
+                { tokenId: parseInt(req.params.productId) || -1 }
+            ]
+        });
+
+        if (!product) {
+            return res.status(404).json({ error: 'Product not found' });
+        }
+
+        // Idempotent: if already sold (e.g. event listener beat us here), return success
+        if (product.status === 'SOLD' || product.currentStage === 'Sold') {
+            return res.json({ success: true, product, alreadySold: true });
+        }
+
+        // Guard: product should be at InRetail. If the stage is wrong, log a warning
+        // but still proceed — the on-chain tx already confirmed, so we must stay in sync.
+        if (product.currentStage !== 'InRetail') {
+            console.warn(`mark-sold: product ${product.productId} is at stage "${product.currentStage}" (expected InRetail). Proceeding anyway as on-chain tx confirmed.`);
+        }
+
+        // Update lifecycle state — no ownership transfer, no consumer_id
+        product.currentStage = 'Sold';
+        product.status = 'SOLD';
+
+        // Append SOLD checkpoint
+        const soldCheckpoint = {
+            timestamp: new Date(),
+            stage: 'Sold',
+            handler: retailerWallet || null,
+            handlerName: retailerName || 'Retailer',
+            handlerEmail: retailerEmail || null,
+            notes: notes || 'Product sold to customer',
+            transactionHash: transactionHash || null,
+            metadata: new Map([
+                ['role', 'RETAILER'],
+                ['action', 'SOLD']
+            ])
+        };
+
+        product.checkpoints.push(soldCheckpoint);
+        await product.save();
+
+        // Emit real-time socket event
+        const io = req.app.get('io');
+        if (io) {
+            io.to(`product:${req.params.productId}`).emit('productSold', {
+                productId: req.params.productId,
+                checkpoint: soldCheckpoint
+            });
+        }
+
+        res.json({ success: true, product });
+    } catch (error) {
+        console.error('Mark sold error:', error);
+        res.status(500).json({ error: 'Failed to mark product as sold' });
+    }
+});
+
 // Get products by explicit role-based ownership
 router.get('/owner/:walletAddress/products', async (req, res) => {
     try {
         const searchedWallet = req.params.walletAddress.toLowerCase();
-        console.log("BACKEND: SEARCHING PRODUCTS FOR WALLET:", searchedWallet);
 
         const user = await User.findOne({ walletAddress: searchedWallet });
         if (!user) {
-            console.log("BACKEND: No user record found for wallet, returning empty products.");
             return res.json([]);
         }
 
@@ -487,16 +594,8 @@ router.get('/owner/:walletAddress/products', async (req, res) => {
         }
 
         const products = await Product.find(query)
-            .populate('manufacturer_id distributor_id retailer_id consumer_id', 'name')
+            .populate('manufacturer_id distributor_id retailer_id', 'name')
             .sort({ createdAt: -1 });
-
-        console.log("DB PRODUCTS FOUND:", products.length, "for wallet:", wallet);
-        if (products.length > 0) {
-            console.log("FIRST PRODUCT OWNER/MANUFACTURER:", 
-                products[0].currentOwner, 
-                products[0].manufacturer?.walletAddress
-            );
-        }
 
         res.json(enrichProducts(products));
     } catch (error) {
@@ -619,28 +718,71 @@ router.get('/stats', async (req, res) => {
 router.get('/stats/:walletAddress', async (req, res) => {
     try {
         const walletAddress = req.params.walletAddress.toLowerCase();
+        const user = await User.findOne({ walletAddress });
+        const role = user?.role || 'CONSUMER';
 
-        const [
-            ownedProducts,
-            productsManufactured,
-            transfersIn,
-            transfersOut
-        ] = await Promise.all([
-            Product.countDocuments({ currentOwner: walletAddress, isActive: true }),
-            Product.countDocuments({ 'manufacturer.walletAddress': walletAddress }),
-            Event.countDocuments({ to: walletAddress, eventType: { $in: ['ProductTransferred', 'TransferredToDistributor', 'TransferredToRetailer', 'ProductSold'] } }),
-            Event.countDocuments({ from: walletAddress, eventType: { $in: ['ProductTransferred', 'TransferredToDistributor', 'TransferredToRetailer', 'ProductSold'] } })
-        ]);
+        const stats = {
+            ownedProducts: await Product.countDocuments({ currentOwner: walletAddress, isActive: true }),
+            primaryMetric: 0, 
+            secondaryMetric: 0 
+        };
 
-        res.json({
-            ownedProducts,
-            productsManufactured,
-            transfersIn,
-            transfersOut
-        });
+        if (role === 'MANUFACTURER') {
+            stats.primaryMetric = await Product.countDocuments({ 'manufacturer.walletAddress': walletAddress });
+            stats.secondaryMetric = await Event.countDocuments({ from: walletAddress, eventType: 'TransferredToDistributor' });
+        } else if (role === 'DISTRIBUTOR') {
+            stats.primaryMetric = await Event.countDocuments({ to: walletAddress, eventType: 'TransferredToDistributor' });
+            stats.secondaryMetric = await Event.countDocuments({ from: walletAddress, eventType: 'TransferredToRetailer' });
+        } else if (role === 'RETAILER') {
+            stats.primaryMetric = await Event.countDocuments({ to: walletAddress, eventType: 'TransferredToRetailer' });
+            stats.secondaryMetric = await Product.countDocuments({ currentStage: 'Sold', retailer_id: user?._id });
+        }
+
+        res.json(stats);
     } catch (error) {
         console.error('Get user stats error:', error);
         res.status(500).json({ error: 'Failed to get statistics' });
+    }
+});
+
+// Get action history for specific user (Role-based)
+router.get('/actions/:walletAddress', async (req, res) => {
+    try {
+        const walletAddress = req.params.walletAddress.toLowerCase();
+        const user = await User.findOne({ walletAddress });
+        const role = user?.role || 'CONSUMER';
+
+        let query = {};
+        if (role === 'MANUFACTURER') {
+            query.$or = [
+                { eventType: 'ProductMinted', from: walletAddress },
+                { eventType: 'TransferredToDistributor', from: walletAddress }
+            ];
+        } else if (role === 'DISTRIBUTOR') {
+            query.$or = [
+                { eventType: 'TransferredToDistributor', to: walletAddress },
+                { eventType: 'TransferredToRetailer', from: walletAddress }
+            ];
+        } else if (role === 'RETAILER') {
+            query.$or = [
+                { eventType: 'TransferredToRetailer', to: walletAddress },
+                { eventType: 'ProductSold', from: walletAddress },
+                { eventType: 'ProductSold', to: walletAddress }
+            ];
+        } else {
+            // Consumers see everything they've scanned (from ConsumerHistory)
+            // But this route is specifically for blockchain-linked actions.
+            query.$or = [{ from: walletAddress }, { to: walletAddress }];
+        }
+
+        const actions = await Event.find(query)
+            .sort({ timestamp: -1 })
+            .limit(50);
+
+        res.json(actions);
+    } catch (error) {
+        console.error('Get user actions error:', error);
+        res.status(500).json({ error: 'Failed to get action history' });
     }
 });
 
@@ -810,6 +952,49 @@ router.patch('/transfers/:id/submit', async (req, res) => {
         res.json(transfer);
     } catch (error) {
         res.status(500).json({ error: 'Failed to submit transaction' });
+    }
+});
+
+// ============================================
+// Consumer History
+// ============================================
+
+// Record a scan (authenticated users only)
+router.post('/consumer/scans', async (req, res) => {
+    try {
+        const { userId, productId, productName } = req.body;
+        
+        if (!userId || !productId) {
+            return res.status(400).json({ error: 'userId and productId are required' });
+        }
+
+        // Keep only the most recent scan if duplicate in last 5 minutes? 
+        // For now, just save every scan.
+        const scan = new ConsumerHistory({
+            userId,
+            productId,
+            productName: productName || productId
+        });
+
+        await scan.save();
+        res.status(201).json(scan);
+    } catch (error) {
+        console.error('Record scan error:', error);
+        res.status(500).json({ error: 'Failed to record scan' });
+    }
+});
+
+// Get scan history for a user
+router.get('/consumer/scans/:userId', async (req, res) => {
+    try {
+        const scans = await ConsumerHistory.find({ userId: req.params.userId })
+            .sort({ scannedAt: -1 })
+            .limit(50);
+        
+        res.json(scans);
+    } catch (error) {
+        console.error('Get scan history error:', error);
+        res.status(500).json({ error: 'Failed to get scan history' });
     }
 });
 

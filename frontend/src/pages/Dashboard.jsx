@@ -18,6 +18,7 @@ import { useWeb3 } from '../contexts/Web3Context';
 import { useTransferCustody } from '../hooks/useTransferCustody';
 import IncomingTransfers from '../components/IncomingTransfers';
 import TransferModal from '../components/TransferModal';
+import ActionHistory from '../components/ActionHistory';
 import { io } from 'socket.io-client';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
@@ -31,10 +32,12 @@ const Dashboard = () => {
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const { isConnected, account } = useWeb3();
+    const { account, isConnected } = useWeb3();
     const { executeTransfer } = useTransferCustody();
     const [selectedProduct, setSelectedProduct] = useState(null);
     const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
+    const [actions, setActions] = useState([]);
+    const [actionsLoading, setActionsLoading] = useState(false);
     const [socket, setSocket] = useState(null);
 
     // Fetch Logic
@@ -108,16 +111,13 @@ const Dashboard = () => {
             // Final active wallet for API (lowercase for safety)
             const activeWallet = (wallet || user?.walletAddress || '').toLowerCase();
             
-            console.log("REAL WALLET:", activeWallet);
-            console.log("FETCHING PRODUCTS FOR:", activeWallet);
-            
+
             let fetchedProducts = [];
 
             if (activeWallet && activeWallet !== '0x1111111111111111111111111111111111111111') {
                 const productsResponse = await fetch(`${API_URL}/api/owner/${activeWallet}/products`);
                 if (productsResponse.ok) {
                     fetchedProducts = await productsResponse.json();
-                    console.log("ALL PRODUCTS FROM API:", fetchedProducts);
                 }
             } else {
                 // Email only fallback
@@ -125,35 +125,41 @@ const Dashboard = () => {
                 if (productsResponse.ok) {
                     const data = await productsResponse.json();
                     fetchedProducts = data.products || [];
-                    console.log("DASHBOARD: FETCHED PUBLIC PRODUCTS:", fetchedProducts);
                 }
             }
 
-            // Filter products to double-check ownership on frontend
-            const filteredProducts = fetchedProducts.filter(
-                (p) => p.currentOwner?.toLowerCase() === activeWallet.toLowerCase()
-            );
-            console.log("FILTERED PRODUCTS:", filteredProducts);
-
+            // Filter products: 
+            // 1. Direct ownership
+            // 2. OR if Retailer: show products they marked as SOLD
+            const filteredProducts = fetchedProducts.filter((p) => {
+                const roles = (user?.roles || [user?.role || '']).filter(Boolean);
+                const isDirectOwner = p.currentOwner?.toLowerCase() === activeWallet.toLowerCase();
+                const isSoldByMe = p.currentStage === 'Sold' && 
+                                  roles.includes('RETAILER') &&
+                                  (p.retailer_id === user?._id || p.currentOwnerName === user?.name);
+                
+                return isDirectOwner || isSoldByMe;
+            });
             setProducts(filteredProducts);
-            console.log("DASHBOARD: STATE UPDATED WITH", filteredProducts.length, "PRODUCTS");
 
             // Fetch unified stats reliably from Event timeline and Product queries via API
             try {
-                const statsRes = await fetch(`${API_URL}/api/stats/${activeWallet}`);
+                const [statsRes, actionsRes] = await Promise.all([
+                    fetch(`${API_URL}/api/stats/${activeWallet}`),
+                    fetch(`${API_URL}/api/actions/${activeWallet}`)
+                ]);
+
                 if (statsRes.ok) {
                     const statsData = await statsRes.json();
-                    setStats({
-                        ownedProducts: statsData.ownedProducts || 0,
-                        productsManufactured: statsData.productsManufactured || 0,
-                        transfersIn: statsData.transfersIn || 0,
-                        transfersOut: statsData.transfersOut || 0
-                    });
-                } else {
-                    setStats({ ownedProducts: filteredProducts.length, productsManufactured: 0, transfersIn: 0, transfersOut: 0 });
+                    setStats(statsData);
+                }
+                
+                if (actionsRes.ok) {
+                    const actionsData = await actionsRes.json();
+                    setActions(actionsData);
                 }
             } catch (_) { 
-                 setStats({ ownedProducts: filteredProducts.length, productsManufactured: 0, transfersIn: 0, transfersOut: 0 });
+                 // Fallback
             }
 
         } catch (err) {
@@ -246,35 +252,43 @@ const Dashboard = () => {
                 {/* Stats Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
                     <DashboardCard
-                        title="Owned Products"
+                        title="In Inventory"
                         value={stats?.ownedProducts || 0}
-                        subtitle="In your possession"
+                        subtitle="Items currently with you"
                         icon={Package}
                         color="indigo"
                         delay={0}
                     />
                     <DashboardCard
-                        title="Manufactured"
-                        value={stats?.productsManufactured || 0}
-                        subtitle="Total created"
+                        title={
+                            user?.role === 'MANUFACTURER' ? 'Total Manufactured' :
+                            user?.role === 'DISTRIBUTOR' ? 'Total Received' :
+                            user?.role === 'RETAILER' ? 'Stock Received' : 'Total Interactions'
+                        }
+                        value={stats?.primaryMetric || 0}
+                        subtitle="Blockchain history"
                         icon={Box}
-                        color="green"
+                        color="emerald"
                         delay={0.1}
                     />
                     <DashboardCard
-                        title="Transfers In"
-                        value={stats?.transfersIn || 0}
-                        subtitle="Received"
+                        title={
+                            user?.role === 'MANUFACTURER' ? 'Sent to Distribution' :
+                            user?.role === 'DISTRIBUTOR' ? 'Sent to Retailers' :
+                            user?.role === 'RETAILER' ? 'Total Sold' : 'Transfers'
+                        }
+                        value={stats?.secondaryMetric || 0}
+                        subtitle="Lifecycle status"
                         icon={ArrowRightLeft}
                         color="purple"
                         delay={0.2}
                     />
                     <DashboardCard
-                        title="Transfers Out"
-                        value={stats?.transfersOut || 0}
-                        subtitle="Sent"
-                        icon={ArrowRightLeft}
-                        color="cyan"
+                        title="Active Role"
+                        value={user?.role || 'Guest'}
+                        subtitle="Current profile"
+                        icon={Users}
+                        color="orange"
                         delay={0.3}
                     />
                 </div>
@@ -329,19 +343,33 @@ const Dashboard = () => {
                         )}
                     </motion.div>
 
-                    {/* Incoming Transfers Panel - right column */}
+                    {/* Sidebar Panel - right column */}
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.5, delay: 0.5 }}
-                        className="lg:col-span-1"
+                        className="lg:col-span-1 space-y-8"
                     >
-                        <div className="flex items-center justify-between mb-5">
-                            <h2 className="text-base font-semibold text-white tracking-tight">Incoming Transfers</h2>
-                            <div className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse" />
+                        {/* Incoming Transfers */}
+                        <div>
+                            <div className="flex items-center justify-between mb-5">
+                                <h2 className="text-base font-semibold text-white tracking-tight">Incoming Transfers</h2>
+                                <div className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse" />
+                            </div>
+                            <div className="rounded-2xl bg-white/[0.03] border border-white/8 overflow-hidden">
+                                <IncomingTransfers />
+                            </div>
                         </div>
-                        <div className="rounded-2xl bg-white/[0.03] border border-white/8 overflow-hidden">
-                            <IncomingTransfers />
+
+                        {/* Recent Actions */}
+                        <div>
+                            <div className="flex items-center justify-between mb-5">
+                                <h2 className="text-base font-semibold text-white tracking-tight">Recent Actions</h2>
+                                <Activity className="w-4 h-4 text-gray-500" />
+                            </div>
+                            <div className="rounded-2xl bg-white/[0.03] border border-white/8 overflow-hidden">
+                                <ActionHistory actions={actions} loading={actionsLoading} />
+                            </div>
                         </div>
                     </motion.div>
                 </div>

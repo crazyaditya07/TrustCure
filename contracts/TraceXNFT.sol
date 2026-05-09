@@ -207,35 +207,30 @@ contract SupplyChainNFT is ERC721, ERC721URIStorage, AccessControl {
     }
 
     /**
-     * @dev Sell product to consumer (only retailer can call)
+     * @dev Mark product as sold (Strict Lifecycle)
+     * Called by a retailer who is the current owner.
+     * Advances stage to Sold and adds a terminal checkpoint.
+     * Ownership remains with the retailer.
      */
-    function sellToConsumer(
-        uint256 tokenId,
-        address consumer,
-        string memory location,
-        string memory notes
-    ) public onlyRole(RETAILER_ROLE) {
+    function markAsSold(uint256 tokenId) public onlyRole(RETAILER_ROLE) {
         require(products[tokenId].exists, "Product does not exist");
         require(ownerOf(tokenId) == msg.sender, "Not the owner");
-        require(products[tokenId].currentStage == Stage.InRetail, "Invalid stage");
-        
-        _transfer(msg.sender, consumer, tokenId);
+        require(products[tokenId].currentStage == Stage.InRetail, "Invalid stage: must be in retail");
         
         products[tokenId].currentStage = Stage.Sold;
-        products[tokenId].currentOwner = consumer;
         
         productCheckpoints[tokenId].push(Checkpoint({
             productId: products[tokenId].productId,
             batchNumber: products[tokenId].batchNumber,
             timestamp: block.timestamp,
-            location: location,
+            location: "",
             stage: Stage.Sold,
-            handler: consumer,
-            notes: notes
+            handler: msg.sender,
+            notes: "Product marked as sold at retail point"
         }));
         
-        emit ProductTransferred(tokenId, msg.sender, consumer, Stage.Sold, block.timestamp);
-        emit CheckpointAdded(tokenId, Stage.Sold, location, consumer, block.timestamp);
+        emit ProductSold(tokenId);
+        emit CheckpointAdded(tokenId, Stage.Sold, "", msg.sender, block.timestamp);
     }
 
     /**
@@ -268,16 +263,7 @@ contract SupplyChainNFT is ERC721, ERC721URIStorage, AccessControl {
         emit TransferredToRetailer(tokenId, retailer);
     }
 
-    /**
-     * @dev Mark product as sold (Strict Lifecycle)
-     */
-    function markAsSold(uint256 tokenId) public {
-        require(ownerOf(tokenId) == msg.sender, "Not the owner");
-        
-        products[tokenId].currentStage = Stage.Sold;
-        
-        emit ProductSold(tokenId);
-    }
+
 
     /**
      * @dev Get product history based on caller's role

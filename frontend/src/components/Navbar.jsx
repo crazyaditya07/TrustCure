@@ -67,16 +67,7 @@ const Navbar = () => {
               transition={{ duration: 0.3 }}
               className="flex items-center justify-center p-0.5 rounded-2xl bg-gradient-to-br from-[#0a0a0f] to-[#12121a] shadow-[0_0_15px_rgba(45,212,191,0.2)]"
             >
-              <img 
-                src="/logo.png" 
-                alt="TrustCure Logo" 
-                className="w-10 h-10 object-contain rounded-xl" 
-                onError={(e) => {
-                  e.target.style.display = 'none';
-                  e.target.nextSibling.style.display = 'block';
-                }}
-              />
-              <div style={{ display: 'none' }}>
+              <div>
                 <Blocks className="w-5 h-5 text-teal-400 m-2.5" />
               </div>
             </motion.div>

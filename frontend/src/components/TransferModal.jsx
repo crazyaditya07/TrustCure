@@ -5,7 +5,8 @@ import axios from 'axios';
 import { useWeb3 } from '../contexts/Web3Context';
 import { useAuth } from '../contexts/AuthContext';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const API_URL = API_BASE.endsWith('/api') ? API_BASE : `${API_BASE}/api`;
 
 const TransferModal = ({ isOpen, onClose, product, onTransferInitiated }) => {
     const { account, signer, contracts } = useWeb3();

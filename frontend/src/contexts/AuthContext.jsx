@@ -22,7 +22,8 @@ export function AuthProvider({ children }) {
                         throw new Error('No token found');
                     }
 
-                    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+                    const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+                    const API_URL = API_BASE.endsWith('/api') ? API_BASE : `${API_BASE}/api`;
                     const response = await fetch(`${API_URL}/auth/me`, {
                         headers: {
                             'Authorization': `Bearer ${userData.token}`
@@ -54,7 +55,8 @@ export function AuthProvider({ children }) {
 
     const login = async (email, password) => {
         try {
-            const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+            const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+            const API_URL = API_BASE.endsWith('/api') ? API_BASE : `${API_BASE}/api`;
             const response = await fetch(`${API_URL}/auth/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -83,7 +85,8 @@ export function AuthProvider({ children }) {
 
     const register = async (userData) => {
         try {
-            const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+            const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+            const API_URL = API_BASE.endsWith('/api') ? API_BASE : `${API_BASE}/api`;
             const response = await fetch(`${API_URL}/auth/register`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },

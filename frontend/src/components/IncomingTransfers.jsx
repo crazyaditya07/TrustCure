@@ -4,7 +4,8 @@ import { Package, ArrowRight, Check, X, Clock, User, ShieldCheck, AlertCircle, L
 import axios from 'axios';
 import { useWeb3 } from '../contexts/Web3Context';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const API_URL = API_BASE.endsWith('/api') ? API_BASE : `${API_BASE}/api`;
 
 const IncomingTransfers = ({ onUpdate }) => {
     const { account } = useWeb3();

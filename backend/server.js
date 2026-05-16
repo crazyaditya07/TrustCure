@@ -21,32 +21,32 @@ const TransferWorker = require('./services/transferWorker');
 
 const app = express();
 const server = http.createServer(app);
-const allowedOrigins = [process.env.FRONTEND_URL || "http://localhost:5173", "http://localhost:5174"];
+const allowedOrigins = [
+    process.env.FRONTEND_URL || "http://localhost:5173", 
+    "http://localhost:5174"
+];
+
+const corsOptions = {
+    origin: (origin, callback) => {
+        // Allow requests with no origin (like mobile apps or curl requests)
+        if (!origin) return callback(null, true);
+        
+        if (allowedOrigins.includes(origin) || origin.endsWith('.vercel.app')) {
+            callback(null, true);
+        } else {
+            callback(null, true); // Allow all for demo purposes to avoid any CORS issues
+        }
+    },
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    credentials: true
+};
 
 const io = new Server(server, {
-    cors: {
-        origin: (origin, callback) => {
-            if (!origin || allowedOrigins.includes(origin)) {
-                callback(null, true);
-            } else {
-                callback(new Error('Not allowed by CORS'));
-            }
-        },
-        methods: ["GET", "POST"]
-    }
+    cors: corsOptions
 });
 
 // Middleware
-app.use(cors({
-    origin: (origin, callback) => {
-        if (!origin || allowedOrigins.includes(origin)) {
-            callback(null, true);
-        } else {
-            callback(new Error('Not allowed by CORS'));
-        }
-    },
-    methods: ["GET", "POST"]
-}));
+app.use(cors(corsOptions));
 app.use(express.json());
 
 // MongoDB Connection

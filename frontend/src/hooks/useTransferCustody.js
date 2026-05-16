@@ -2,7 +2,8 @@ import { useState, useCallback } from 'react';
 import { useWeb3 } from '../contexts/Web3Context';
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const API_URL = API_BASE.endsWith('/api') ? API_BASE : `${API_BASE}/api`;
 
 /**
  * useTransferCustody hook

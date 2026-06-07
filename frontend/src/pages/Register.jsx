@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useWeb3 } from '../contexts/Web3Context';
 
 function Register() {
     const navigate = useNavigate();
     const { register } = useAuth();
+    const { account } = useWeb3();
     const [formData, setFormData] = useState({
         name: '',
         email: '',
@@ -18,6 +20,16 @@ function Register() {
     });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
+
+    // Automatically pre-fill wallet address if MetaMask is connected
+    useEffect(() => {
+        if (account) {
+            setFormData(prev => ({
+                ...prev,
+                walletAddress: account
+            }));
+        }
+    }, [account]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -92,14 +104,11 @@ function Register() {
                         fontSize: '2.5rem',
                         fontWeight: 700,
                         marginBottom: '1rem',
-                        background: 'linear-gradient(135deg, var(--text-metallic-light), var(--accent-cyan-neon))',
-                        WebkitBackgroundClip: 'text',
-                        WebkitTextFillColor: 'transparent',
-                        backgroundClip: 'text'
+                        color: '#EDEADE'
                     }}>
                         Create Account
                     </h1>
-                    <p style={{ color: 'var(--text-secondary)', fontSize: '1.125rem' }}>
+                    <p style={{ color: '#7A7A6A', fontSize: '1.125rem' }}>
                         Join TrustCure Supply Chain Network
                     </p>
                 </div>
@@ -296,7 +305,7 @@ function Register() {
                         <Link
                             to="/login"
                             style={{
-                                color: 'var(--accent-cyan-neon)',
+                                color: '#5A8A7A',
                                 fontWeight: 600,
                                 textDecoration: 'none'
                             }}

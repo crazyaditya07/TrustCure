@@ -12,12 +12,13 @@ const AnimatedButton = ({
   type = 'button'
 }) => {
   const variants = {
-    primary: 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white hover:shadow-lg hover:shadow-indigo-500/25',
-    secondary: 'bg-white/10 text-white hover:bg-white/15 border border-white/10',
-    outline: 'bg-transparent text-white border border-white/20 hover:bg-white/5',
-    ghost: 'bg-transparent text-gray-400 hover:text-white hover:bg-white/5',
-    success: 'bg-green-500 text-white hover:bg-green-600 hover:shadow-lg hover:shadow-green-500/25',
-    danger: 'bg-red-500 text-white hover:bg-red-600 hover:shadow-lg hover:shadow-red-500/25',
+    primary: 'bg-[var(--accent-teal)] text-[var(--text-primary)] border border-transparent',
+    secondary: 'bg-transparent text-[var(--accent-teal-lt)] hover:bg-[var(--bg-raised)] border border-[var(--border-warm)]',
+    outline: 'bg-transparent text-[var(--accent-teal-lt)] hover:bg-[var(--bg-raised)] border border-[var(--border-warm)]',
+    ghost: 'bg-transparent text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-raised)]',
+    amber: 'bg-[var(--accent-amber)] text-[#1A1208] border border-transparent',
+    success: 'bg-[var(--verified-bg)] text-[var(--verified-text)] border border-[var(--verified-border)]',
+    danger: 'bg-[var(--danger-bg)] text-[var(--danger-text)] border border-[var(--danger-border)]',
   }
 
   const sizes = {
@@ -35,7 +36,7 @@ const AnimatedButton = ({
       whileTap={{ scale: disabled || loading ? 1 : 0.98 }}
       className={`
         relative inline-flex items-center justify-center gap-2 
-        rounded-xl font-medium transition-all duration-300
+        rounded-[6px] font-medium transition-all duration-300
         ${variants[variant]}
         ${sizes[size]}
         ${disabled || loading ? 'opacity-50 cursor-not-allowed' : ''}

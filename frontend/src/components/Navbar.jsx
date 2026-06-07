@@ -54,9 +54,10 @@ const Navbar = () => {
       animate={{ y: 0 }}
       transition={{ duration: 0.5, ease: 'easeOut' }}
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled
-        ? 'bg-trustcure-darker/90 backdrop-blur-xl border-b border-white/5'
+        ? ''
         : 'bg-transparent'
         }`}
+      style={isScrolled ? { background: 'rgba(18,18,20,0.88)', backdropFilter: 'blur(8px)', borderBottom: '1px solid #1E1E20' } : {}}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 lg:h-20">
@@ -65,7 +66,7 @@ const Navbar = () => {
             <motion.div
               whileHover={{ scale: 1.05 }}
               transition={{ duration: 0.3 }}
-              className="flex items-center justify-center p-0.5 rounded-2xl bg-gradient-to-br from-[#0a0a0f] to-[#12121a] shadow-[0_0_15px_rgba(45,212,191,0.2)]"
+              className="flex items-center justify-center p-0.5 rounded-2xl bg-gradient-to-br from-[#0a0a0f] to-[#12121a]"
             >
               <div>
                 <Blocks className="w-5 h-5 text-teal-400 m-2.5" />
@@ -91,15 +92,14 @@ const Navbar = () => {
                   <motion.div
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all duration-300 ${isActive
-                      ? 'text-white'
-                      : 'text-gray-400 hover:text-white'
-                      }`}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-[8px] transition-all duration-300`}
+                    style={{ color: isActive ? 'var(--accent-teal)' : 'var(--text-muted)' }}
                   >
                     {isActive && (
                       <motion.div
                         layoutId="activeNav"
-                        className="absolute inset-0 bg-white/10 rounded-xl"
+                        className="absolute inset-0 rounded-[8px]"
+                        style={{ background: 'var(--bg-raised)' }}
                         transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
                       />
                     )}
@@ -122,7 +122,8 @@ const Navbar = () => {
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={handleLogout}
-                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-medium bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 transition-all duration-300"
+                  className="flex items-center gap-2 px-5 py-2.5 font-[600] transition-all duration-300"
+                  style={{ background: '#2E1C1C', color: '#B06050', border: '1px solid #4A2828', borderRadius: '6px' }}
                 >
                   <LogOut className="w-4 h-4" />
                   Logout
@@ -134,7 +135,8 @@ const Navbar = () => {
                   <motion.button
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-medium text-gray-300 hover:text-white transition-all duration-300"
+                    className="flex items-center gap-2 px-5 py-2.5 rounded-[6px] font-[600] hover:bg-[var(--bg-raised)] transition-all duration-300"
+                    style={{ color: 'var(--text-muted)' }}
                   >
                     Login
                   </motion.button>
@@ -143,7 +145,8 @@ const Navbar = () => {
                   <motion.button
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-medium bg-gradient-to-r from-indigo-500 to-purple-600 text-white hover:shadow-lg hover:shadow-indigo-500/25 transition-all duration-300"
+                    className="flex items-center gap-2 px-5 py-2.5 rounded-[6px] font-[600] transition-all duration-300"
+                    style={{ background: '#3A6A5A', color: '#D4EDE4' }}
                   >
                     Get Started
                   </motion.button>
@@ -171,7 +174,8 @@ const Navbar = () => {
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.3 }}
-            className="lg:hidden bg-trustcure-darker/95 backdrop-blur-xl border-b border-white/5"
+            className="lg:hidden"
+            style={{ background: 'rgba(18,18,20,0.88)', backdropFilter: 'blur(8px)', borderBottom: '1px solid #1E1E20' }}
           >
             <div className="px-4 py-6 space-y-2">
               {navLinks.map((link, index) => {
@@ -188,10 +192,8 @@ const Navbar = () => {
                     <Link
                       to={link.path}
                       onClick={() => setIsMobileMenuOpen(false)}
-                      className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${isActive
-                        ? 'bg-white/10 text-white'
-                        : 'text-gray-400 hover:text-white hover:bg-white/5'
-                        }`}
+                      className="flex items-center gap-3 px-4 py-3 rounded-[8px] transition-all hover:bg-[var(--bg-raised)]"
+                      style={{ color: isActive ? 'var(--accent-teal)' : 'var(--text-muted)', background: isActive ? 'var(--bg-raised)' : 'transparent' }}
                     >
                       <Icon className="w-5 h-5" />
                       <span className="font-medium">{link.label}</span>
@@ -209,7 +211,8 @@ const Navbar = () => {
                 {isAuthenticated ? (
                   <button
                     onClick={() => { handleLogout(); setIsMobileMenuOpen(false); }}
-                    className="w-full flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-medium bg-red-500/10 text-red-400 border border-red-500/20"
+                    className="w-full flex items-center justify-center gap-2 px-5 py-3 font-[600] transition-all duration-300"
+                    style={{ background: '#2E1C1C', color: '#B06050', border: '1px solid #4A2828', borderRadius: '6px' }}
                   >
                     <LogOut className="w-4 h-4" />
                     Logout
@@ -217,12 +220,12 @@ const Navbar = () => {
                 ) : (
                   <>
                     <Link to="/login" onClick={() => setIsMobileMenuOpen(false)}>
-                      <button className="w-full flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-medium text-gray-300 hover:text-white mb-2">
+                      <button className="w-full flex items-center justify-center gap-2 px-5 py-3 rounded-[6px] font-[600] hover:bg-[var(--bg-raised)] transition-all duration-300 mb-2" style={{ color: 'var(--text-muted)' }}>
                         Login
                       </button>
                     </Link>
                     <Link to="/register" onClick={() => setIsMobileMenuOpen(false)}>
-                      <button className="w-full flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-medium bg-gradient-to-r from-indigo-500 to-purple-600 text-white">
+                      <button className="w-full flex items-center justify-center gap-2 px-5 py-3 rounded-[6px] font-[600] transition-all duration-300" style={{ background: '#3A6A5A', color: '#D4EDE4' }}>
                         Get Started
                       </button>
                     </Link>

@@ -2,7 +2,7 @@ import { Blocks } from 'lucide-react'
 
 const Footer = () => {
   return (
-    <footer className="relative border-t border-white/5 bg-trustcure-darker/50 backdrop-blur-xl">
+    <footer className="relative border-t border-white/5 bg-[#18181A]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
 
         {/* Brand — centered */}

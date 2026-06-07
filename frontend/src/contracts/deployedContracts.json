@@ -3,7 +3,7 @@
   "network": "sepolia",
   "contracts": {
     "SupplyChainNFT": {
-      "address": "0x13C8d781694fE5791345FD7e53A9fb27e8AdB399",
+      "address": "0x313E14f51FEe170D19C3DCE9eFb03709E916510d",
       "abi": [
         {
           "inputs": [],

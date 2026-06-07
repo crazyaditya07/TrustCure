@@ -39,7 +39,7 @@ const ProductCard = ({ product, index = 0, onTransfer, currentUserWallet }) => {
     >
       <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/10 to-purple-500/10 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
-      <div className="relative bg-trustcure-card/80 backdrop-blur-xl border border-white/5 rounded-2xl p-6 hover:border-indigo-500/20 hover:bg-white/[0.05] transition-all duration-300">
+      <div className="relative bg-[var(--bg-surface)] border border-[var(--border-default)] rounded-[10px] p-6 hover:bg-[var(--bg-raised)] transition-all duration-300">
         {/* Header */}
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-center gap-3">
@@ -59,9 +59,18 @@ const ProductCard = ({ product, index = 0, onTransfer, currentUserWallet }) => {
           </div>
 
           <div className="flex flex-col items-end gap-2">
-            <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg ${status.color}/10 border ${status.color}/20`}>
-              <StatusIcon className={`w-3.5 h-3.5 ${status.color.replace('bg-', 'text-')}`} />
-              <span className={`text-xs font-medium ${status.color.replace('bg-', 'text-')}`}>
+            <div 
+              className={`flex items-center gap-1.5 px-3 py-1.5 ${product.status !== 'sold' ? `rounded-lg ${status.color}/10 border ${status.color}/20` : ''}`}
+              style={product.status === 'sold' ? {
+                background: 'var(--sold-bg)',
+                color: 'var(--sold-text)',
+                border: '1px solid var(--sold-border)',
+                fontSize: '10px',
+                borderRadius: '4px'
+              } : {}}
+            >
+              <StatusIcon className={`w-3.5 h-3.5 ${product.status !== 'sold' ? status.color.replace('bg-', 'text-') : ''}`} style={product.status === 'sold' ? { color: 'var(--sold-text)' } : {}} />
+              <span className={`font-medium ${product.status !== 'sold' ? status.color.replace('bg-', 'text-') : ''} ${product.status !== 'sold' ? 'text-xs' : ''}`} style={product.status === 'sold' ? { color: 'var(--sold-text)' } : {}}>
                 {status.label}
               </span>
             </div>
@@ -171,7 +180,7 @@ const ProductCard = ({ product, index = 0, onTransfer, currentUserWallet }) => {
               <motion.button
                 whileHover={{ scale: 1.02, x: 4 }}
                 whileTap={{ scale: 0.98 }}
-                className="flex items-center gap-2 text-indigo-400 hover:text-indigo-300 text-sm font-medium transition-colors"
+                className="flex items-center gap-2 text-[var(--accent-teal-lt)] hover:text-[var(--accent-teal)] text-sm font-medium transition-colors"
               >
                 Verify
                 <ArrowRight className="w-4 h-4" />

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import QRScanner from '../components/QRScanner/Scanner';
+import { Info } from 'lucide-react';
 
 function ScanProduct() {
     const navigate = useNavigate();
@@ -44,44 +45,52 @@ function ScanProduct() {
             </div>
 
             {/* Mode Toggle Pill */}
-            <div className="flex items-center gap-1 p-1 bg-white/[0.04] border border-white/8 rounded-xl mb-6">
+            <div className="flex items-center gap-1 p-1 rounded-[10px] mb-6" style={{ background: '#1E1E20', border: '1px solid #252525' }}>
                 <button
                     onClick={() => setScanMode('camera')}
-                    className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                    className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-[8px] text-sm font-[600] transition-all duration-200 ${
                         scanMode === 'camera'
-                            ? 'bg-indigo-500/25 border border-indigo-500/30 text-indigo-300'
-                            : 'text-gray-500 hover:text-gray-400'
+                            ? ''
+                            : ''
                     }`}
+                    style={scanMode === 'camera' ? { background: '#252525', color: '#EDEADE', border: '1px solid #252525' } : { color: '#5A5A50' }}
                 >
                     <span>📷</span> Camera Scan
                 </button>
                 <button
                     onClick={() => setScanMode('manual')}
-                    className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                    className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-[8px] text-sm font-[600] transition-all duration-200 ${
                         scanMode === 'manual'
-                            ? 'bg-indigo-500/25 border border-indigo-500/30 text-indigo-300'
-                            : 'text-gray-500 hover:text-gray-400'
+                            ? ''
+                            : ''
                     }`}
+                    style={scanMode === 'manual' ? { background: '#252525', color: '#EDEADE', border: '1px solid #252525' } : { color: '#5A5A50' }}
                 >
                     <span>⌨️</span> Manual Entry
                 </button>
             </div>
 
             {/* Scanner / Manual Form */}
-            <div className="bg-white/[0.04] border border-white/8 rounded-2xl p-6 backdrop-blur-sm mb-6">
+            <div className="p-6 mb-6" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-default)', borderRadius: '10px' }}>
                 {scanMode === 'camera' ? (
                     <div className="relative">
                         {/* Instruction above scanner */}
                         <p className="text-center text-xs text-gray-500 mb-4">Point your camera at the product QR code to begin scanning.</p>
                         {/* Subtle scan-line glow overlay */}
-                        <div className="relative rounded-xl overflow-hidden">
+                        <div className="relative rounded-[8px] overflow-hidden">
+                            {/* Frame brackets */}
+                            <div className="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 z-10" style={{ borderColor: '#5A8A7A', opacity: 0.8, borderWidth: '2px' }} />
+                            <div className="absolute top-0 right-0 w-8 h-8 border-t-2 border-r-2 z-10" style={{ borderColor: '#5A8A7A', opacity: 0.8, borderWidth: '2px' }} />
+                            <div className="absolute bottom-0 left-0 w-8 h-8 border-b-2 border-l-2 z-10" style={{ borderColor: '#5A8A7A', opacity: 0.8, borderWidth: '2px' }} />
+                            <div className="absolute bottom-0 right-0 w-8 h-8 border-b-2 border-r-2 z-10" style={{ borderColor: '#5A8A7A', opacity: 0.8, borderWidth: '2px' }} />
+                            
                             <QRScanner
                                 onScan={handleScan}
                                 onError={(err) => console.error('Scanner error:', err)}
                             />
                             <div
-                                className="absolute inset-x-0 h-0.5 bg-gradient-to-r from-transparent via-indigo-400/70 to-transparent"
-                                style={{ animation: 'scanLine 2s ease-in-out infinite', top: '50%' }}
+                                className="absolute inset-x-0 h-0.5"
+                                style={{ background: 'rgba(90,138,122,0.5)', animation: 'scanLine 2s ease-in-out infinite', top: '50%' }}
                             />
                         </div>
                     </div>
@@ -104,15 +113,18 @@ function ScanProduct() {
                             className="w-full btn btn-primary py-2.5 text-sm disabled:opacity-40 disabled:cursor-not-allowed"
                             disabled={!manualInput.trim()}
                         >
-                            🔍 Verify Product
+                            Verify Product
                         </button>
                     </form>
                 )}
             </div>
 
             {/* How to Verify */}
-            <div className="bg-white/[0.03] border border-white/6 rounded-2xl p-6">
-                <h3 className="text-sm font-semibold text-white mb-4">ℹ️ How to Verify</h3>
+            <div className="p-6" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-default)', borderRadius: '10px' }}>
+                <div className="flex items-center gap-2 mb-4">
+                    <Info className="w-4 h-4 text-gray-400" />
+                    <h3 className="text-sm font-semibold text-white">How to Verify</h3>
+                </div>
                 <ol className="space-y-2 text-xs text-gray-500">
                     <li><strong className="text-gray-400">QR Code:</strong> Scan the QR code on the product packaging</li>
                     <li><strong className="text-gray-400">Manual:</strong> Enter the product ID printed on the label</li>

@@ -27,7 +27,7 @@ function ProtectedRoute({ children, allowedRoles = [] }) {
 
     if (loading) {
         return (
-            <div className="flex items-center justify-center h-full min-h-screen bg-trustcure-darker">
+            <div className="flex items-center justify-center h-full min-h-screen" style={{ background: '#18181A' }}>
                 <div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
             </div>
         );
@@ -144,16 +144,8 @@ function AppContent() {
     const location = useLocation();
 
     return (
-        <div className="min-h-screen bg-trustcure-darker relative overflow-x-hidden font-sans text-gray-100">
-            {/* Background Effects */}
-            <div className="fixed inset-0 pointer-events-none z-0">
-                <div className="absolute w-96 h-96 bg-indigo-600/20 rounded-full blur-[100px] top-0 left-1/4 animate-pulse-glow" />
-                <div className="absolute w-80 h-80 bg-purple-600/20 rounded-full blur-[100px] bottom-1/4 right-0" />
-                <div className="absolute w-64 h-64 bg-cyan-600/20 rounded-full blur-[100px] top-1/2 left-0" />
-                <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-[0.02]" />
-            </div>
-
-            <div className="relative z-10 flex flex-col min-h-screen">
+        <div className="min-h-screen relative overflow-x-hidden font-sans text-gray-100" style={{ background: '#18181A' }}>
+            <div className="relative flex flex-col min-h-screen">
                 <Navbar />
 
                 <main className="flex-grow">

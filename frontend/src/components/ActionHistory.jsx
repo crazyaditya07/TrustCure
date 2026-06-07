@@ -13,15 +13,15 @@ const ActionHistory = ({ actions = [], loading = false }) => {
   const getActionConfig = (type) => {
     switch (type) {
       case 'ProductMinted':
-        return { label: 'Manufactured', color: 'text-blue-400', bg: 'bg-blue-400/10', icon: PlusCircle };
+        return { label: 'Manufactured', icon: PlusCircle };
       case 'TransferredToDistributor':
       case 'TransferredToRetailer':
       case 'ProductTransferred':
-        return { label: 'Transfer', color: 'text-indigo-400', bg: 'bg-indigo-400/10', icon: ArrowRight };
+        return { label: 'Transfer', icon: ArrowRight };
       case 'ProductSold':
-        return { label: 'Sold', color: 'text-emerald-400', bg: 'bg-emerald-400/10', icon: ShoppingBag };
+        return { label: 'Sold', icon: ShoppingBag };
       default:
-        return { label: 'Activity', color: 'text-gray-400', bg: 'bg-gray-400/10', icon: Activity };
+        return { label: 'Activity', icon: Activity };
     }
   };
 
@@ -63,12 +63,12 @@ const ActionHistory = ({ actions = [], loading = false }) => {
             className="group flex items-center justify-between p-4 hover:bg-white/[0.02] transition-colors"
           >
             <div className="flex items-center gap-4">
-              <div className={`w-10 h-10 rounded-xl ${config.bg} flex items-center justify-center border border-white/5`}>
-                <Icon className={`w-5 h-5 ${config.color}`} />
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: '#1A2820', border: '1px solid #28402E' }}>
+                <Icon className="w-5 h-5" style={{ color: '#5A9A70' }} />
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <span className={`text-xs font-bold uppercase tracking-wider ${config.color}`}>
+                  <span className="text-xs font-bold uppercase tracking-wider" style={{ color: '#5A9A70' }}>
                     {config.label}
                   </span>
                   <span className="text-gray-500 text-[10px]">#{(action.productId || action.tokenId || '').slice(-8)}</span>

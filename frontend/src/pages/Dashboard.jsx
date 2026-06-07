@@ -227,20 +227,20 @@ const Dashboard = () => {
                 >
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                         <div>
-                            <h1 className="text-3xl lg:text-4xl font-bold text-white mb-1 tracking-tight">
+                            <h1 style={{ fontSize: '22px', fontWeight: '600', color: 'var(--text-primary)' }} className="mb-1 tracking-tight">
                                 Dashboard
                             </h1>
                             <p className="text-gray-500 text-sm">
                                 Welcome back, <span className="text-gray-400 font-medium">{user?.name || user?.email || 'User'}</span>
-                                {account && <span className="ml-2 text-gray-600 font-mono text-xs">({truncateWallet(account)})</span>}
+                                {account && <span className="ml-2" style={{ color: '#4A4A40', fontSize: '12px', fontFamily: 'monospace' }}>({truncateWallet(account)})</span>}
                             </p>
                         </div>
 
                         {/* Role Badge */}
                         <div className="flex items-center gap-2">
                             {(user?.roles || [user?.role]).filter(Boolean).map((role, idx) => (
-                                <div key={idx} className="px-3 py-1.5 rounded-lg bg-indigo-500/10 border border-indigo-500/20">
-                                    <span className="text-xs font-semibold text-indigo-400 uppercase tracking-wider">
+                                <div key={idx} style={{ background: '#252525', border: '1px solid #2E2E2A', borderRadius: '8px', padding: '4px 10px', fontSize: '11px', color: '#7A7A6A' }}>
+                                    <span style={{ textTransform: 'none', fontSize: '13px', fontWeight: 600, color: '#EDEADE' }}>
                                         {role}
                                     </span>
                                 </div>
@@ -305,7 +305,7 @@ const Dashboard = () => {
                         <div className="flex items-center justify-between mb-5">
                             <h2 className="text-base font-semibold text-white tracking-tight">Your Products</h2>
                             {products.length > 0 && (
-                                <Link to="/scan" className="text-indigo-400 hover:text-indigo-300 text-xs font-medium flex items-center gap-1 transition-colors">
+                                <Link to="/scan" className="text-[var(--accent-teal-lt)] hover:text-[var(--accent-teal)] text-xs font-[600] flex items-center gap-1 transition-colors" style={{ textDecoration: 'none' }}>
                                     Scan Product <ChevronRight className="w-3.5 h-3.5" />
                                 </Link>
                             )}
@@ -331,11 +331,11 @@ const Dashboard = () => {
                                 <p className="text-gray-500 text-sm mb-5">No products found in your inventory.</p>
                                 <div className="flex justify-center gap-3">
                                     {(user?.role === 'MANUFACTURER' || user?.role === 'ADMIN') && (
-                                        <Link to="/create-product" className="px-4 py-2 bg-indigo-500/20 border border-indigo-500/30 rounded-xl text-indigo-400 text-sm font-medium hover:bg-indigo-500/30 transition-all">
+                                        <Link to="/create-product" style={{ background: '#3A6A5A', borderRadius: '6px', padding: '8px 16px', color: '#fff', fontSize: '14px', fontWeight: 500, textDecoration: 'none' }}>
                                             Create Product
                                         </Link>
                                     )}
-                                    <Link to="/scan" className="px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-gray-300 text-sm font-medium hover:bg-white/10 transition-all">
+                                    <Link to="/scan" className="px-4 py-2 bg-transparent border border-[var(--border-warm)] rounded-[6px] text-[var(--accent-teal-lt)] text-sm font-[600] hover:bg-[var(--bg-raised)] transition-all" style={{ textDecoration: 'none' }}>
                                         Scan Product
                                     </Link>
                                 </div>
@@ -354,7 +354,7 @@ const Dashboard = () => {
                         <div>
                             <div className="flex items-center justify-between mb-5">
                                 <h2 className="text-base font-semibold text-white tracking-tight">Incoming Transfers</h2>
-                                <div className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse" />
+                                <div className="w-2 h-2 rounded-full animate-pulse" style={{ background: '#5A9A70' }} />
                             </div>
                             <div className="rounded-2xl bg-white/[0.03] border border-white/8 overflow-hidden">
                                 <IncomingTransfers />

@@ -66,15 +66,16 @@ const ProductJourney = ({ currentStage = 0, checkpoints = [], isLoading = false 
     <motion.div 
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="w-full max-w-4xl mx-auto p-6 bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 shadow-2xl overflow-hidden"
+      className="w-full max-w-4xl mx-auto p-6 bg-[var(--bg-surface)] rounded-[10px] border border-[var(--border-default)] overflow-hidden"
     >
       <div className="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <h3 className="text-xl font-bold text-white tracking-tight">Product Journey</h3>
         <motion.div 
           whileHover={{ scale: 1.05 }}
-          className="px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-medium uppercase tracking-wider flex items-center gap-2 self-start sm:self-auto cursor-default"
+          className="px-3 py-1 rounded-[6px] text-[var(--verified-text)] text-xs font-medium uppercase tracking-wider flex items-center gap-2 self-start sm:self-auto cursor-default"
+          style={{ background: 'var(--verified-bg)', border: '1px solid var(--verified-border)' }}
         >
-          <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+          <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: 'var(--verified-text)' }} />
           On-Chain Verified
         </motion.div>
       </div>
@@ -114,28 +115,18 @@ const ProductJourney = ({ currentStage = 0, checkpoints = [], isLoading = false 
             >
               {/* Node Icon Container */}
               <div className="relative group cursor-help">
-                {/* Active Glow */}
-                {isActive && (
-                  <motion.div 
-                    layoutId="active-glow"
-                    className="absolute inset-0 rounded-2xl bg-indigo-500/30 blur-2xl"
-                    animate={{ scale: [1, 1.4, 1], opacity: [0.3, 0.6, 0.3] }}
-                    transition={{ repeat: Infinity, duration: 3 }}
-                  />
-                )}
-
                 <motion.div 
                   whileHover={{ scale: (isCompleted || isActive) ? 1.05 : 1 }}
                   animate={{ 
                     scale: isActive ? 1.1 : 1,
-                    borderColor: (isCompleted || isActive) ? 'rgb(99 102 241)' : 'rgb(55 65 81)',
-                    backgroundColor: isCompleted ? 'rgb(99 102 241)' : 'rgb(17 24 39)',
-                    boxShadow: isActive ? '0 0 30px rgba(99,102,241,0.2)' : 'none'
+                    borderColor: (isCompleted || isActive) ? 'var(--accent-teal)' : 'var(--border-warm)',
+                    backgroundColor: isCompleted ? 'var(--accent-teal)' : (isActive ? 'var(--bg-surface)' : 'var(--bg-raised)'),
+                    boxShadow: 'none'
                   }}
                   className={`w-14 h-14 rounded-2xl border-2 flex items-center justify-center transition-all duration-500 relative z-20`}
                 >
                   <Icon className={`w-6 h-6 transition-colors duration-500 ${
-                    isCompleted ? 'text-white' : (isActive ? 'text-indigo-400' : 'text-gray-600')
+                    isCompleted ? 'text-[var(--text-primary)]' : (isActive ? 'text-[var(--accent-teal)]' : 'text-[var(--text-muted)]')
                   }`} />
 
                   {/* Floating Product Marker */}
@@ -156,9 +147,9 @@ const ProductJourney = ({ currentStage = 0, checkpoints = [], isLoading = false 
                     <motion.div 
                       initial={{ scale: 0 }}
                       animate={{ scale: 1 }}
-                      className="absolute -top-1.5 -right-1.5 bg-white rounded-full p-0.5 shadow-xl ring-2 ring-indigo-500/20"
+                      className="absolute -top-1.5 -right-1.5 bg-white rounded-full p-0.5"
                     >
-                      <CheckCircle2 className="w-4 h-4 text-indigo-600 fill-white" />
+                      <CheckCircle2 className="w-4 h-4 text-[var(--accent-teal)] fill-white" />
                     </motion.div>
                   )}
                 </motion.div>
@@ -192,9 +183,11 @@ const ProductJourney = ({ currentStage = 0, checkpoints = [], isLoading = false 
                 >
                   {stage.label}
                 </motion.span>
-                <div className={`mt-1.5 px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-tight transition-colors duration-500 ${
-                  isCompleted ? 'bg-indigo-500/20 text-indigo-400' : (isActive ? 'bg-emerald-500/20 text-emerald-400' : 'bg-gray-800/50 text-gray-600')
-                }`}>
+                <div className="mt-1.5 px-2.5 py-0.5 rounded-[6px] text-[9px] font-bold uppercase tracking-tight transition-colors duration-500" style={{
+                  background: isCompleted ? 'var(--verified-bg)' : (isActive ? 'var(--bg-surface)' : 'var(--bg-raised)'),
+                  color: isCompleted ? 'var(--verified-text)' : (isActive ? 'var(--accent-teal-lt)' : 'var(--text-muted)'),
+                  border: `1px solid ${isCompleted ? 'var(--verified-border)' : (isActive ? 'var(--border-warm)' : 'var(--border-default)')}`
+                }}>
                   {isCompleted ? 'Verified' : (isActive ? 'Current' : 'Upcoming')}
                 </div>
               </div>

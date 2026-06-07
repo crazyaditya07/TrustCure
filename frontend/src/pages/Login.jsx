@@ -49,14 +49,11 @@ function Login() {
                         fontSize: '2.5rem',
                         fontWeight: 700,
                         marginBottom: '1rem',
-                        background: 'linear-gradient(135deg, var(--text-metallic-light), var(--accent-cyan-neon))',
-                        WebkitBackgroundClip: 'text',
-                        WebkitTextFillColor: 'transparent',
-                        backgroundClip: 'text'
+                        color: '#EDEADE'
                     }}>
                         Welcome Back
                     </h1>
-                    <p style={{ color: 'var(--text-secondary)', fontSize: '1.125rem' }}>
+                    <p style={{ color: '#7A7A6A', fontSize: '1.125rem' }}>
                         Login to TrustCure
                     </p>
                 </div>
@@ -131,7 +128,7 @@ function Login() {
                         <Link
                             to="/register"
                             style={{
-                                color: 'var(--accent-cyan-neon)',
+                                color: '#5A8A7A',
                                 fontWeight: 600,
                                 textDecoration: 'none'
                             }}

@@ -69,7 +69,8 @@ const IncomingTransfers = ({ onUpdate }) => {
                             initial={{ opacity: 0, scale: 0.95 }}
                             animate={{ opacity: 1, scale: 1 }}
                             exit={{ opacity: 0, scale: 0.9, y: 20 }}
-                            className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl shadow-indigo-500/5 group relative overflow-hidden"
+                            className="bg-slate-900 border border-slate-800 rounded-3xl p-6 group relative overflow-hidden"
+                            style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.4)' }}
                         >
                             {/* Decorative background */}
                             <div className="absolute top-0 right-0 p-8 bg-indigo-500/5 rounded-full -mr-4 -mt-4 group-hover:bg-indigo-500/10 transition-colors"></div>

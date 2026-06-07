@@ -84,7 +84,7 @@ function CreateProduct() {
             console.log("DIRECT SIGNER ACCOUNT:", directAccount);
             
             // Step 5 - Initialize Contract Directly
-            const contractAddress = "0x313E14f51FEe170D19C3DCE9eFb03709E916510d";
+            const contractAddress = contracts?.supplyChainNFT?.target || "0x313E14f51FEe170D19C3DCE9eFb03709E916510d";
             const contractABI = [
                 "function mintProduct(string productId, string batchNumber, string tokenURI, string notes) public returns (uint256)",
                 "function name() public view returns (string)",
@@ -214,22 +214,22 @@ function CreateProduct() {
         <div className="max-w-2xl mx-auto pt-6 pb-16 px-4">
             {/* Page Header */}
             <div className="mb-8">
-                <h1 className="text-3xl font-bold text-white mb-2 tracking-tight">Create Product</h1>
+                <h1 className="text-3xl font-bold text-[var(--text-primary)] mb-2 tracking-tight">Create Product</h1>
                 {/* Blockchain status badge */}
                 {isConnected && contracts.supplyChainNFT ? (
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 text-xs font-semibold">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 font-[600]" style={{ background: 'var(--verified-bg)', color: 'var(--verified-text)', fontSize: '12px', border: '1px solid var(--verified-border)', borderRadius: '9999px' }}>
+                        <span className="w-1.5 h-1.5 rounded-full" style={{ background: 'var(--verified-text)' }} />
                         Connected to Blockchain — NFT Minting Active
                     </span>
                 ) : (
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/25 text-amber-400 text-xs font-semibold">
-                        <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 font-[600]" style={{ background: 'var(--danger-bg)', color: 'var(--danger-text)', fontSize: '12px', border: '1px solid var(--danger-border)', borderRadius: '9999px' }}>
+                        <span className="w-1.5 h-1.5 rounded-full" style={{ background: 'var(--danger-text)' }} />
                         Database Mode — No Blockchain
                     </span>
                 )}
             </div>
 
-            <form onSubmit={handleSubmit} className="bg-white/[0.04] border border-white/8 rounded-2xl p-8 space-y-6 backdrop-blur-sm">
+            <form onSubmit={handleSubmit} className="p-8 space-y-6" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-default)', borderRadius: '10px' }}>
                 {/* Row 1: Product ID + Generate */}
                 <div className="form-group">
                     <label className="form-label">Product ID *</label>
@@ -246,7 +246,8 @@ function CreateProduct() {
                         <button
                             type="button"
                             onClick={generateProductId}
-                            className="px-4 py-2.5 rounded-xl bg-white/8 border border-white/10 text-gray-300 text-sm font-medium hover:bg-white/12 hover:border-white/20 transition-all duration-200 whitespace-nowrap"
+                            className="px-4 py-2.5 rounded-[6px] transition-all duration-200 whitespace-nowrap"
+                            style={{ background: 'var(--bg-raised)', border: '1px solid var(--border-warm)', color: 'var(--text-muted)' }}
                         >
                             Generate
                         </button>
@@ -303,7 +304,7 @@ function CreateProduct() {
                             <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                             Creating...
                         </span>
-                    ) : '🏭 Create Product'}
+                    ) : 'Create Product'}
                 </button>
             </form>
         </div>

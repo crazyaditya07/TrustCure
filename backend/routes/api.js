@@ -398,11 +398,17 @@ router.post('/products', async (req, res) => {
                 productData.manufacturer_id = mfgUser._id;
                 // Enrich the manufacturer sub-document too if not already set
                 if (!productData.manufacturer || !productData.manufacturer.name) {
+                    const formattedLocation = mfgUser.location
+                        ? (typeof mfgUser.location === 'string'
+                            ? mfgUser.location
+                            : [mfgUser.location.address, mfgUser.location.city, mfgUser.location.country].filter(Boolean).join(', '))
+                        : '';
+                        
                     productData.manufacturer = {
                         walletAddress: mfgUser.walletAddress,
                         name: mfgUser.name || '',
                         email: mfgUser.email || '',
-                        location: mfgUser.location || ''
+                        location: formattedLocation
                     };
                 }
             }

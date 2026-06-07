@@ -173,7 +173,8 @@ const TransferModal = ({ isOpen, onClose, product, onTransferInitiated }) => {
                 initial={{ opacity: 0, scale: 0.95, y: 20 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                className="bg-slate-900 border border-slate-800 w-full max-w-md rounded-3xl overflow-hidden shadow-2xl shadow-indigo-500/10"
+                className="bg-slate-900 border border-slate-800 w-full max-w-md rounded-3xl overflow-hidden"
+                style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.4)' }}
             >
                 {/* Header */}
                 <div className="px-6 py-5 border-b border-slate-800 flex items-center justify-between bg-gradient-to-r from-slate-900 via-indigo-950/20 to-slate-900">
@@ -238,7 +239,8 @@ const TransferModal = ({ isOpen, onClose, product, onTransferInitiated }) => {
                             <button
                                 onClick={handleMarkAsSold}
                                 disabled={loading}
-                                className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold rounded-2xl transition-all shadow-lg shadow-emerald-600/20 flex items-center justify-center gap-2"
+                                className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold rounded-2xl transition-all flex items-center justify-center gap-2"
+                                style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.4)' }}
                             >
                                 {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <ShoppingBag className="w-5 h-5" />}
                                 {loading ? 'Processing...' : 'Confirm & Mark as Sold'}
@@ -272,7 +274,7 @@ const TransferModal = ({ isOpen, onClose, product, onTransferInitiated }) => {
                                                 onClick={() => setSelectedRecipient(u)}
                                                 className={`w-full p-4 rounded-2xl border transition-all flex items-center gap-4 text-left group
                                                     ${selectedRecipient?.walletAddress === u.walletAddress
-                                                        ? 'bg-indigo-600/20 border-indigo-500 shadow-lg shadow-indigo-500/10'
+                                                        ? 'bg-indigo-600/20 border-indigo-500'
                                                         : 'bg-slate-800/50 border-slate-700 hover:border-slate-600'}`}
                                             >
                                                 <div className={`p-2 rounded-xl flex-shrink-0 transition-colors
@@ -301,7 +303,8 @@ const TransferModal = ({ isOpen, onClose, product, onTransferInitiated }) => {
                             <button
                                 disabled={!selectedRecipient || loading}
                                 onClick={() => setStep(2)}
-                                className="w-full mt-4 py-4 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold rounded-2xl transition-all shadow-lg shadow-indigo-600/20 flex items-center justify-center gap-2"
+                                className="w-full mt-4 py-4 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold rounded-2xl transition-all flex items-center justify-center gap-2"
+                                style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.4)' }}
                             >
                                 Continue <ChevronRight className="w-5 h-5" />
                             </button>
@@ -348,7 +351,8 @@ const TransferModal = ({ isOpen, onClose, product, onTransferInitiated }) => {
                                 <button
                                     onClick={handleTransfer}
                                     disabled={loading}
-                                    className="flex-[2] py-4 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-2xl transition-all shadow-lg shadow-indigo-600/20 flex items-center justify-center gap-2"
+                                    className="flex-[2] py-4 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-2xl transition-all flex items-center justify-center gap-2"
+                                    style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.4)' }}
                                 >
                                     {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
                                     Confirm & Sign
@@ -361,7 +365,7 @@ const TransferModal = ({ isOpen, onClose, product, onTransferInitiated }) => {
                     {/* ── Step 3: Success ── */}
                     {step === 3 && (
                         <div className="text-center py-8 space-y-6">
-                            <div className="w-20 h-20 bg-emerald-500/20 rounded-full flex items-center justify-center mx-auto shadow-xl shadow-emerald-500/10">
+                            <div className="w-20 h-20 bg-emerald-500/20 rounded-full flex items-center justify-center mx-auto" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.4)' }}>
                                 <CheckCircle2 className="w-10 h-10 text-emerald-500" />
                             </div>
                             <div>

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { List, Map } from 'lucide-react';
 import { useWeb3 } from '../contexts/Web3Context';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotifications } from '../contexts/NotificationContext';
@@ -182,9 +183,9 @@ function ProductDetails() {
                 style={{
                     marginBottom: 'var(--spacing-6)',
                     background: verification?.verified
-                        ? 'linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(16, 185, 129, 0.05))'
-                        : 'linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(239, 68, 68, 0.05))',
-                    borderColor: verification?.verified ? 'rgba(16, 185, 129, 0.3)' : 'rgba(239, 68, 68, 0.3)'
+                        ? 'var(--verified-bg)'
+                        : 'var(--danger-bg)',
+                    borderColor: verification?.verified ? 'var(--verified-border)' : 'var(--danger-border)'
                 }}
             >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
@@ -192,7 +193,8 @@ function ProductDetails() {
                         width: '60px',
                         height: '60px',
                         borderRadius: '50%',
-                        background: verification?.verified ? 'var(--accent-emerald)' : 'var(--error)',
+                        background: verification?.verified ? 'var(--verified-text)' : 'var(--danger-text)',
+                        color: 'var(--bg-page)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -226,19 +228,19 @@ function ProductDetails() {
                     <h3 style={{ marginBottom: 'var(--spacing-4)' }}>Product Information</h3>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                         <div>
-                            <p style={{ color: 'var(--text-tertiary)', margin: '0 0 4px', fontSize: 'var(--font-size-sm)' }}>
+                            <p style={{ color: 'var(--text-hint)', margin: '0 0 4px', fontSize: 'var(--font-size-sm)' }}>
                                 Product ID
                             </p>
-                            <p style={{ margin: 0, fontFamily: 'monospace' }}>{productId}</p>
+                            <p style={{ color: 'var(--text-primary)', margin: 0, fontFamily: 'monospace' }}>{productId}</p>
                         </div>
                         <div>
-                            <p style={{ color: 'var(--text-tertiary)', margin: '0 0 4px', fontSize: 'var(--font-size-sm)' }}>
+                            <p style={{ color: 'var(--text-hint)', margin: '0 0 4px', fontSize: 'var(--font-size-sm)' }}>
                                 Token ID
                             </p>
-                            <p style={{ margin: 0 }}>{product?.tokenId || 'N/A'}</p>
+                            <p style={{ color: 'var(--text-primary)', margin: 0 }}>{product?.tokenId || 'N/A'}</p>
                         </div>
                         <div>
-                            <p style={{ color: 'var(--text-tertiary)', margin: '0 0 4px', fontSize: 'var(--font-size-sm)' }}>
+                            <p style={{ color: 'var(--text-hint)', margin: '0 0 4px', fontSize: 'var(--font-size-sm)' }}>
                                 Current Stage
                             </p>
                             <span className={`stage-badge ${product?.currentStage?.toLowerCase().replace('in', 'in-')}`}>
@@ -246,10 +248,10 @@ function ProductDetails() {
                             </span>
                         </div>
                         <div>
-                            <p style={{ color: 'var(--text-tertiary)', margin: '0 0 4px', fontSize: 'var(--font-size-sm)' }}>
+                            <p style={{ color: 'var(--text-hint)', margin: '0 0 4px', fontSize: 'var(--font-size-sm)' }}>
                                 Total Checkpoints
                             </p>
-                            <p style={{ margin: 0 }}>{product?.checkpoints?.length || 0}</p>
+                            <p style={{ color: 'var(--text-primary)', margin: 0 }}>{product?.checkpoints?.length || 0}</p>
                         </div>
                     </div>
                 </div>
@@ -270,7 +272,7 @@ function ProductDetails() {
                                 }}
                             />
                             <p style={{
-                                color: 'var(--text-tertiary)',
+                                color: 'var(--text-hint)',
                                 fontSize: 'var(--font-size-sm)',
                                 marginTop: '8px'
                             }}>
@@ -295,13 +297,13 @@ function ProductDetails() {
                     className={`btn ${activeTab === 'timeline' ? 'btn-primary' : 'btn-secondary'}`}
                     onClick={() => setActiveTab('timeline')}
                 >
-                    📋 Timeline
+                    <List className="w-4 h-4" /> Timeline
                 </button>
                 <button
                     className={`btn ${activeTab === 'map' ? 'btn-primary' : 'btn-secondary'}`}
                     onClick={() => setActiveTab('map')}
                 >
-                    🗺️ Map
+                    <Map className="w-4 h-4" /> Map
                 </button>
             </div>
 

@@ -1,202 +1,136 @@
 import React from 'react';
-import { motion } from 'framer-motion';
-import { Factory, Truck, Store, User, Package, CheckCircle2 } from 'lucide-react';
+import { Factory, Truck, Store, User } from 'lucide-react';
 
 const STAGES = [
-  { id: 0, label: 'Manufacturer', icon: Factory, color: 'indigo' },
-  { id: 1, label: 'Distributor', icon: Truck, color: 'purple' },
-  { id: 2, label: 'Retailer', icon: Store, color: 'emerald' },
-  { id: 3, label: 'Consumer', icon: User, color: 'blue' },
+  { id: 0, label: 'Manufacturer', icon: Factory },
+  { id: 1, label: 'Distributor', icon: Truck },
+  { id: 2, label: 'Retailer', icon: Store },
+  { id: 3, label: 'Consumer', icon: User },
 ];
 
-/**
- * ProductJourney Component - Phase 1 Structure
- * 
- * Implements a responsive 4-stage supply chain stepper.
- * - Desktop: Horizontal layout with connecting lines.
- * - Mobile: Vertical timeline layout.
- */
-/**
- * ProductJourney Component - Phase 4 UX Polish & Trust Signals
- * 
- * Finalized with motion effects, loading skeletons, and trust signals.
- */
 const ProductJourney = ({ currentStage = 0, checkpoints = [], isLoading = false }) => {
-  
-  // Map raw stage to a consumer-safe role label for tooltips
-  const stageRoleLabel = (stage) => {
-    const map = {
-      Manufacturer: 'Verified Manufacturer',
-      Distributor:  'Verified Distributor',
-      Retailer:     'Verified Retailer',
-      Consumer:     'Verified Consumer',
-    };
-    return map[stage] || stage;
-  };
-
-  // Format timestamp to date-only (no time, no timezone)
-  const formatTime = (ts) => {
-    if (!ts || ts === 0) return 'Pending';
-    const date = new Date(Number(ts) * 1000);
-    if (isNaN(date.getTime())) return 'Pending';
-    return date.toLocaleDateString('en-US', {
-      month: 'long',
-      day: 'numeric',
-      year: 'numeric',
-    });
-  };
-
   if (isLoading) {
     return (
-      <div className="w-full max-w-4xl mx-auto p-6 bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 shadow-2xl animate-pulse">
-        <div className="h-6 w-48 bg-gray-700 rounded mb-8" />
-        <div className="flex flex-col md:flex-row justify-between gap-10 md:gap-0">
-          {[1,2,3,4].map((i) => (
-            <div key={i} className="flex md:flex-col items-center gap-5 md:gap-3">
-              <div className="w-14 h-14 rounded-2xl bg-gray-800" />
-              <div className="h-3 w-16 bg-gray-800 rounded" />
-            </div>
-          ))}
-        </div>
+      <div style={{ background: 'rgba(30,30,32,0.92)', border: '1px solid #2E2E2A', borderRadius: '10px', padding: '16px', backdropFilter: 'blur(4px)', minHeight: '200px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
 
+  const formatTime = (ts) => {
+    if (!ts) return 'Unknown date';
+    const date = new Date(ts);
+    if (isNaN(date.getTime())) return 'Unknown date';
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit'
+    });
+  };
+
   return (
-    <motion.div 
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="w-full max-w-4xl mx-auto p-6 bg-[var(--bg-surface)] rounded-[10px] border border-[var(--border-default)] overflow-hidden"
-    >
-      <div className="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <h3 className="text-xl font-bold text-white tracking-tight">Product Journey</h3>
-        <motion.div 
-          whileHover={{ scale: 1.05 }}
-          className="px-3 py-1 rounded-[6px] text-[var(--verified-text)] text-xs font-medium uppercase tracking-wider flex items-center gap-2 self-start sm:self-auto cursor-default"
-          style={{ background: 'var(--verified-bg)', border: '1px solid var(--verified-border)' }}
-        >
-          <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: 'var(--verified-text)' }} />
-          On-Chain Verified
-        </motion.div>
+    <div style={{ background: 'rgba(30,30,32,0.92)', border: '1px solid #2E2E2A', borderRadius: '10px', padding: '16px', backdropFilter: 'blur(4px)' }}>
+      {/* Header */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+        <div style={{ fontSize: '13px', fontWeight: 500, color: '#EDEADE' }}>Product journey</div>
+        <div style={{ background: '#1A2820', color: '#5A9A70', border: '1px solid #28402E', borderRadius: '20px', fontSize: '10px', padding: '3px 10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <div style={{ width: '5px', height: '5px', background: '#5A9A70', borderRadius: '50%' }} />
+          On-chain verified
+        </div>
       </div>
 
-      <div className="relative flex flex-col md:flex-row justify-between items-start md:items-center gap-10 md:gap-0">
-        {/* Progress Line (Desktop) */}
-        <div className="hidden md:block absolute top-7 left-0 right-0 h-0.5 bg-gray-700/30 -z-10" />
-        <motion.div 
-          initial={{ width: 0 }}
-          animate={{ width: `${(currentStage / (STAGES.length - 1)) * 100}%` }}
-          transition={{ duration: 1, ease: 'circOut' }}
-          className="hidden md:block absolute top-7 left-0 h-0.5 bg-gradient-to-r from-indigo-500 via-cyan-400 to-indigo-500 bg-[length:200%_auto] animate-gradient-x -z-10"
-        />
-        
-        {/* Progress Line (Mobile) */}
-        <div className="md:hidden absolute left-7 top-0 bottom-0 w-0.5 bg-gray-700/30 -z-10" />
-        <motion.div 
-          initial={{ height: 0 }}
-          animate={{ height: `${(currentStage / (STAGES.length - 1)) * 100}%` }}
-          transition={{ duration: 1.2, ease: 'circOut' }}
-          className="md:hidden absolute left-7 top-0 w-0.5 bg-gradient-to-b from-indigo-500 to-cyan-500 -z-10"
-        />
-
+      {/* Pipeline */}
+      <div style={{ display: 'flex', alignItems: 'flex-start', position: 'relative', marginBottom: '32px' }}>
         {STAGES.map((stage, index) => {
-          const Icon = stage.icon;
           const isCompleted = index < currentStage;
-          const isActive = index === currentStage;
-          const cp = checkpoints[index];
-          
+          const isCurrent = index === currentStage;
+          const Icon = stage.icon;
+
           return (
-            <motion.div 
-              key={stage.id} 
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: index * 0.1 }}
-              className="flex md:flex-col items-center gap-5 md:gap-4 relative z-10 w-full md:w-auto group"
-            >
-              {/* Node Icon Container */}
-              <div className="relative group cursor-help">
-                <motion.div 
-                  whileHover={{ scale: (isCompleted || isActive) ? 1.05 : 1 }}
-                  animate={{ 
-                    scale: isActive ? 1.1 : 1,
-                    borderColor: (isCompleted || isActive) ? 'var(--accent-teal)' : 'var(--border-warm)',
-                    backgroundColor: isCompleted ? 'var(--accent-teal)' : (isActive ? 'var(--bg-surface)' : 'var(--bg-raised)'),
-                    boxShadow: 'none'
-                  }}
-                  className={`w-14 h-14 rounded-2xl border-2 flex items-center justify-center transition-all duration-500 relative z-20`}
-                >
-                  <Icon className={`w-6 h-6 transition-colors duration-500 ${
-                    isCompleted ? 'text-[var(--text-primary)]' : (isActive ? 'text-[var(--accent-teal)]' : 'text-[var(--text-muted)]')
-                  }`} />
-
-                  {/* Floating Product Marker */}
-                  {isActive && (
-                    <motion.div 
-                      layoutId="product-marker"
-                      initial={{ y: 0 }}
-                      animate={{ y: [0, -4, 0] }}
-                      transition={{ repeat: Infinity, duration: 2, ease: 'easeInOut' }}
-                      className="absolute -top-4 -right-3 w-8 h-8 bg-white rounded-xl shadow-2xl flex items-center justify-center border border-indigo-100 z-30"
-                    >
-                      <Package className="w-4 h-4 text-indigo-600" />
-                    </motion.div>
-                  )}
-
-                  {/* Trust Badge */}
-                  {isCompleted && (
-                    <motion.div 
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      className="absolute -top-1.5 -right-1.5 bg-white rounded-full p-0.5"
-                    >
-                      <CheckCircle2 className="w-4 h-4 text-[var(--accent-teal)] fill-white" />
-                    </motion.div>
-                  )}
-                </motion.div>
-
-                {/* Detail Tooltip */}
-                {(isCompleted || isActive) && (
-                  <div className="absolute left-1/2 -translate-x-1/2 bottom-[110%] mb-3 w-52 p-4 rounded-xl bg-gray-900/95 backdrop-blur shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-white/10 opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none z-50 scale-95 group-hover:scale-100 origin-bottom">
-                    <div className="space-y-2">
-                      <div className="flex justify-between items-center">
-                        <span className="text-[9px] uppercase font-black text-gray-500 tracking-widest">Verified Actor</span>
-                        <div className="h-1.5 w-1.5 rounded-full bg-indigo-500" />
-                      </div>
-                      <div className="text-[11px] text-indigo-300 font-medium">
-                        {stageRoleLabel(stage.label)}
-                      </div>
-                      <div className="pt-2 mt-2 border-t border-white/5">
-                        <div className="text-[9px] uppercase font-black text-gray-500 tracking-widest">Entry Date</div>
-                        <div className="text-[11px] text-white/90 font-medium">{cp ? formatTime(cp.timestamp) : 'Pending...'}</div>
-                      </div>
-                    </div>
-                    <div className="absolute top-full left-1/2 -translate-x-1/2 border-8 border-transparent border-t-gray-900/95" />
-                  </div>
+            <div key={stage.id} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative' }}>
+              {/* Connector line */}
+              {index < STAGES.length - 1 && (
+                <div style={{ position: 'absolute', top: '20px', left: '60%', width: '80%', height: '1px', background: isCompleted ? '#3A6A5A' : '#2E2E2A', zIndex: 0 }} />
+              )}
+              
+              {/* Icon Box */}
+              <div style={{ position: 'relative', zIndex: 1, width: '40px', height: '40px', borderRadius: '10px', background: (isCompleted || isCurrent) ? '#2A3A32' : '#222225', border: `1px solid ${(isCompleted || isCurrent) ? '#3A6A5A' : '#2E2E2A'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '8px' }}>
+                <Icon size={18} color={(isCompleted || isCurrent) ? '#5A9A72' : '#4A4A40'} />
+                
+                {/* Checkmark overlay */}
+                {isCompleted && (
+                  <div style={{ position: 'absolute', top: '-4px', right: '-4px', width: '14px', height: '14px', borderRadius: '50%', background: '#5A9A70', border: '2px solid #18181A' }} />
                 )}
               </div>
 
-              {/* Node Label */}
-              <div className="flex flex-col md:items-center text-left md:text-center select-none">
-                <motion.span 
-                  animate={{ color: (isCompleted || isActive) ? 'rgb(255 255 255)' : 'rgb(107 114 128)' }}
-                  className="text-[11px] font-black uppercase tracking-[0.2em]"
-                >
-                  {stage.label}
-                </motion.span>
-                <div className="mt-1.5 px-2.5 py-0.5 rounded-[6px] text-[9px] font-bold uppercase tracking-tight transition-colors duration-500" style={{
-                  background: isCompleted ? 'var(--verified-bg)' : (isActive ? 'var(--bg-surface)' : 'var(--bg-raised)'),
-                  color: isCompleted ? 'var(--verified-text)' : (isActive ? 'var(--accent-teal-lt)' : 'var(--text-muted)'),
-                  border: `1px solid ${isCompleted ? 'var(--verified-border)' : (isActive ? 'var(--border-warm)' : 'var(--border-default)')}`
-                }}>
-                  {isCompleted ? 'Verified' : (isActive ? 'Current' : 'Upcoming')}
-                </div>
+              <div style={{ fontSize: '10px', letterSpacing: '0.05em', textTransform: 'uppercase', color: (isCompleted || isCurrent) ? '#5A9A70' : '#5A5A50', marginBottom: '6px', textAlign: 'center' }}>
+                {stage.label}
               </div>
-            </motion.div>
+
+              <div style={{ 
+                background: isCompleted ? '#1A2820' : '#222225', 
+                color: isCompleted ? '#5A9A70' : '#5A5A50', 
+                border: `1px solid ${isCompleted ? '#28402E' : '#2E2E2A'}`, 
+                fontSize: '9px', padding: '2px 7px', borderRadius: '3px' 
+              }}>
+                {isCompleted ? 'Verified' : (isCurrent ? 'Current' : 'Pending')}
+              </div>
+            </div>
           );
         })}
       </div>
-    </motion.div>
+
+      {/* Timeline */}
+      <div>
+        <div style={{ fontSize: '11px', color: '#4A4A40', letterSpacing: '0.04em', textTransform: 'uppercase', margin: '14px 0 10px' }}>
+          Chain events
+        </div>
+
+        <div>
+          {checkpoints && checkpoints.length > 0 ? checkpoints.map((cp, idx) => (
+            <div key={idx} style={{ display: 'flex', gap: '12px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <div style={{ width: '8px', height: '8px', background: '#4A8A6A', borderRadius: '50%', flexShrink: 0, marginTop: '8px' }} />
+                {idx !== checkpoints.length - 1 && (
+                  <div style={{ width: '1px', background: '#252525', flex: 1, margin: '4px 0' }} />
+                )}
+              </div>
+
+              <div style={{ flex: 1, background: '#1E1E20', border: '1px solid #252525', borderRadius: '7px', padding: '9px 12px', marginBottom: '8px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                  <div style={{ fontSize: '12px', fontWeight: 500, color: '#EDEADE' }}>{cp.stage || cp.rawStage || 'Event Recorded'}</div>
+                  <div style={{ background: '#1A2820', color: '#5A9A70', border: '1px solid #28402E', fontSize: '9px', padding: '2px 7px', borderRadius: '3px' }}>Verified</div>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  <div style={{ fontSize: '11px', color: '#7A7A6A' }}>
+                    {cp.handlerName || cp.actorName || truncateAddress(cp.handler)}
+                  </div>
+                  <div style={{ fontSize: '10px', color: '#5A5A50' }}>
+                    {formatTime(cp.timestamp)}
+                  </div>
+                  {cp.transactionHash && (
+                    <div style={{ fontFamily: 'monospace', color: '#5A8A7A', fontSize: '10px', marginTop: '4px' }}>
+                      tx: {cp.transactionHash}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )) : (
+            <div style={{ fontSize: '12px', color: '#5A5A50', fontStyle: 'italic' }}>No on-chain events recorded yet.</div>
+          )}
+        </div>
+      </div>
+    </div>
   );
 };
+
+function truncateAddress(address) {
+  if (!address) return 'Unknown Actor';
+  return `${address.slice(0, 6)}...${address.slice(-4)}`;
+}
 
 export default ProductJourney;

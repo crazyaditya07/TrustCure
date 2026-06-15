@@ -127,7 +127,9 @@ const ProductCard = ({ product, index = 0, onTransfer, currentUserWallet }) => {
           <div className="flex items-center gap-3">
             {product.status !== 'sold' && product.transferStatus === 'none' && (
               <div className="relative group/tooltip">
-                {product.status === 'at_retailer' ? (
+                {(() => {
+                  const canMarkAsSold = product.status === 'at_retailer';
+                  return canMarkAsSold ? (
                   // Mark as Sold — only shown for retailer at InRetail stage
                   <motion.button
                     whileHover={isOwner ? { scale: 1.05 } : {}}
@@ -165,7 +167,7 @@ const ProductCard = ({ product, index = 0, onTransfer, currentUserWallet }) => {
                     <ArrowRightLeft className="w-3.5 h-3.5" />
                     Transfer
                   </motion.button>
-                )}
+                )})()}
 
                 {/* Tooltip for non-owners */}
                 {!isOwner && (

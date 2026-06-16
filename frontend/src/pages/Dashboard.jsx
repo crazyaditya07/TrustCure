@@ -142,7 +142,9 @@ const Dashboard = () => {
                                            (p.manufacturer_id?._id === user?._id || p.manufacturer_id === user?._id || p.manufacturer?.walletAddress?.toLowerCase() === activeWallet.toLowerCase());
                 
                 const isDistributedByMe = roles.includes('DISTRIBUTOR') && 
-                                          (p.distributor_id?._id === user?._id || p.distributor_id === user?._id);
+                                          (p.distributor_id?._id === user?._id || 
+                                           p.distributor_id === user?._id || 
+                                           p.checkpoints?.some(cp => cp.handler?.toLowerCase() === activeWallet.toLowerCase()));
                 
                 return isDirectOwner || isSoldByMe || isManufacturedByMe || isDistributedByMe;
             });
